@@ -2,7 +2,6 @@ Task: To predict total international viewership. To do this, we are required to 
 
 
 
-
 Factors that may drive international viewership
 
 -number of allstar players on the team
@@ -14,6 +13,6 @@ Factors that may drive international viewership
 Ideas:
 -Analyze when Cleveland is playing and international viewership. See if the average number of viewers when cleveland is playing differs from the population mean. Average cleveland, average all internatonal viewers, perform difference of means test. This is to test if Lebron has a significant factor on viewership
 
-- Analyze the effect of Holidays on viewership. (Christmas, New Years) do the average number of viewers of significant Holidays have an effect/ 
+- Analyze the effect of Holidays on viewership. (Christmas, New Years) do the average number of viewers of significant Holidays have a statistical difference?
 
 -Get the rank of the team from season prior, calculate rank differential of games, and order by viewership (add the attribute to the game). Rank for october should be based on last season
