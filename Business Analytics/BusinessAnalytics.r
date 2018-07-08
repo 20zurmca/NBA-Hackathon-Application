@@ -1,11 +1,8 @@
 library(sqldf)
-<<<<<<< HEAD
+
 library(lubridate)
 setwd("ProjectRepos/NBAH18/Business\ Analytics")
 #setwd("/home/cameron/NBAH18/Business\ Analytics")
-
-=======
->>>>>>> c6669f5da9210f05df848b8a250bda1601944ebf
 
 #Before pushing, comment out my working directory and uncomment yours
 
@@ -48,8 +45,6 @@ zStatCleveland <- (clevelandMeanViews - meanNumberTotalViewers)/(clevelandSd/sqr
 #Z statistic is so large (15)..this is compelling evidence that people watch Lebron
 
 
-
-<<<<<<< HEAD
 #analyzing specific dates for total viewers
 sqldf('select* from groupByQuery order by Tot_Viewers desc')
 
@@ -87,8 +82,8 @@ for(i in 1:length(groupByQuery$Game_Date))
   }
 }
 
-totalViewersPerGame$gameType <- as.factor(totalViewersPerGame$gameType);
-=======
+totalViewersPerGame$gameType <- as.factor(totalViewersPerGame$gameType)
+
 
 
 
