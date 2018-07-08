@@ -4,10 +4,11 @@ Task: To predict total international viewership. To do this, we are required to 
 
 Factors that may drive international viewership
 
--number of allstar players on the team
+-number of allstar players featured in the game
+-Is Lebron playing specifically?
 -Time Zone of the game (based on where the home team is)
 -Month of the Year
--Is it Christmas or opening day?
+-Is it Christmas or opening day, day after new years?
 -The rank of the higher ranking team playing that game
 
 Ideas:

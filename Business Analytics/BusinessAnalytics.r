@@ -32,7 +32,7 @@ meanNumberTotalViewers <- mean(totalViewersPerGame$Tot_Viewers)
 sdTotalViewers <- sd(totalViewersPerGame$Tot_Viewers)
 
 #Seeing what dates/games were most popular. We noticed that Christmas/opening day had a large effect, as well as the caliber of the teams playing
-#sqldf('select* from totalViewersPerGame order by Tot_Viewers desc') 
+sqldf('select* from totalViewersPerGame order by Tot_Viewers desc') 
 
 #Performing a z-test to see if CLE's average is higher than the overall. First getting only Cleveland games
 clevelandGames <- sqldf('select Game_ID, Home_Team, Away_Team, Game_Date, Tot_Viewers from totalViewersPerGame where Home_Team = "CLE" OR Away_Team = "CLE"')
@@ -60,7 +60,7 @@ sqldf('select Home_Team, Away_Team from training where Game_ID = 21700015 and Ga
 
 
 #Convert all dates to months of the year
-totalViewersPerGame$Month <- month(as.POSIXlt(groupByQuery$Game_Date, format = "%m/%d/%Y"))
+totalViewersPerGame$Month <- month(as.POSIXlt(totalViewersPerGame$Game_Date, format = "%m/%d/%Y"))
 
 
 #average all CLE intl viewers 
@@ -72,7 +72,7 @@ gamesCLE <- sqldf('select count(*) from training where Home_Team = "CLE" OR Away
 
 #determine if it's Christmas or opening day.  Set to C for Christmas, O for opening day, and R for any other game.
 totalViewersPerGame$gameType <- NULL
-for(i in 1:length(groupByQuery$Game_Date))
+for(i in 1:length(totalViewersPerGame$Game_Date))
 {
   if(totalViewersPerGame$Game_Date[i] == "12/25/2016" || totalViewersPerGame$Game_Date[i] == "12/25/2017")
   {
@@ -101,6 +101,9 @@ getWinsEnteringGame <- function(date)
   sqldf(query)
   return(sqldf(query));
 }
+
+
+gameData[91:length(gameData$Game_Date),c(3,4,6)]
 
 
 #use rankings2015 from 2015-2016 season for month of October 10/2016 only
@@ -149,8 +152,6 @@ while(j < length(totalViewersPerGame$Tot_Viewers))
 }
 
 totalViewersPerGame$gameType <- as.factor(totalViewersPerGame$gameType)
-
-
 
 
 
