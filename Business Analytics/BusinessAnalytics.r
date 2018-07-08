@@ -19,11 +19,13 @@ testing<-read.csv("test_set.csv", header = T)
 
 head(testing)
 
+hasTopFivePlayer <- read.csv("teams_with_top_players.csv", header = T)
+
 totalViewersPerGame <- sqldf('select Game_ID, Home_Team, Away_Team, Game_Date, sum("Rounded.Viewers") as Tot_Viewers from training group by Game_ID')
 
 head(totalViewersPerGame)
 #Looking at the distributing of totalViewersPerGame-We see that is is heavily skewed right
-qqnorm(totalViewersPerGame$Tot_Viewers)
+qqnorm(totalViewersPerGame$Tot_Viewers, main = "Normal Q-Q Plot for the total viewers")
 qqline(totalViewersPerGame$Tot_Viewers)
 summary(totalViewersPerGame$Tot_Viewers)
 meanNumberTotalViewers <- mean(totalViewersPerGame$Tot_Viewers)
@@ -36,12 +38,12 @@ sdTotalViewers <- sd(totalViewersPerGame$Tot_Viewers)
 clevelandGames <- sqldf('select Game_ID, Home_Team, Away_Team, Game_Date, Tot_Viewers from totalViewersPerGame where Home_Team = "CLE" OR Away_Team = "CLE"')
 
 #We notice that the clevelandGames$Tot_Viewers still has a right skew, but since n is so large (129), CLT applies
-qqnorm(clevelandGames$Tot_Viewers)
-qqline(clevelandGames$Tot_Viewers, main = "Normal Q-Q Plot for Cleveland's Viewership")
+qqnorm(clevelandGames$Tot_Viewers, main = "Normal Q-Q Plot for Cleveland's Viewership")
+qqline(clevelandGames$Tot_Viewers)
 
 #Gathering statistics
 sum(clevelandGames$Tot_Viewers)
-clevelandMeanViews <- sum(clevelandGames$Tot_Viewers)/length(clevelandGames$Tot_Viewers)
+clevelandMeanViews <- mean(clevelandGames$Tot_Viewers)
 clevelandN <- length(clevelandGames$Tot_Viewers)
 clevelandSd <- sd(clevelandGames$Tot_Viewers)
 
@@ -49,11 +51,9 @@ zStarCleveland <- qnorm(.95, 0 ,1) #Obtaining critical value to compare to
 zStatCleveland <- (clevelandMeanViews - meanNumberTotalViewers)/(clevelandSd/sqrt(clevelandN)) 
 #Z statistic is so large (15)..this is compelling evidence that people watch Lebron
 
-levels(totalViewersPerGame$Home_Team)
-
 
 #analyzing specific dates for total viewers
-sqldf('select* from groupByQuery order by Tot_Viewers desc')
+sqldf('select* from totalViewersPerGame order by Tot_Viewers desc')
 
 #specific game query
 sqldf('select Home_Team, Away_Team from training where Game_ID = 21700015 and Game_Date = "10/19/2017"')
@@ -147,6 +147,8 @@ while(j < length(totalViewersPerGame$Tot_Viewers))
   }
   j <- j+1
 }
+
+totalViewersPerGame$gameType <- as.factor(totalViewersPerGame$gameType)
 
 
 
