@@ -22,6 +22,9 @@ numberAllStarsPerTeam2016_2017 <- read.csv("number_all_stars_per_team_2016-2017.
 numberAllStarsPerTeam2015_2016 <- read.csv("number_all_stars_per_team_2015-2016.csv", header = T)
 testing<-read.csv("test_set.csv", header = T)
 
+#use rankings2015 from 2015-2016 season for month of October 10/2016 only
+rankings2015_2016 <- read.csv("rankings2015_2016.csv", header = T)
+
 hasTopFivePlayer <- read.csv("teams_with_top_players.csv", header = T)
 
 rankings2015_2016 <- read.csv("rankings2015_2016.csv", header = T)
@@ -67,6 +70,35 @@ sqldf('select* from totalViewersPerGame order by Tot_Viewers desc')
 
 #specific game query
 sqldf('select Home_Team, Away_Team from training where Game_ID = 21700015 and Game_Date = "10/19/2017"')
+
+#Experimenting getting number of all stars for a team from numberAllStarsPerTeam2015_2016
+sqldf('select Number_of_All_Stars from numberAllStarsPerTeam2015_2016 where Team = "CLE"')$Number_of_All_Stars
+numberAllStarsPerTeam2015_2016[numberAllStarsPerTeam2015_2016$Team == "CLE",]$Number_of_All_Stars
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+############################################################ HELPER FUNCTIONS ##########################################################################
+
+getYearFromDate <- function(date)
+{
+  return(substr(date, 9, stri_length(date)))
+}
+
+lookUpAllStarCountFor <- function(team, month, year)
+{
+  if(year == "16" || (year == "17" && month < 10))
+  {
+    return(numberAllStarsPerTeam2015_2016[numberAllStarsPerTeam2015_2016$Team == team,]$Number_of_All_Stars)
+    
+  } else
+  {
+    return(numberAllStarsPerTeam2016_2017[numberAllStarsPerTeam2016_2017$Team == team,]$Number_of_All_Stars)
+  }
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #################################################################### FUNCTIONS AND APPENDED COLLUMNS #########################################################################
@@ -77,9 +109,8 @@ sqldf('select Home_Team, Away_Team from training where Game_ID = 21700015 and Ga
 #Convert all dates to months of the year
 totalViewersPerGame$Month <- month(as.POSIXlt(totalViewersPerGame$Game_Date, format = "%m/%d/%Y"))
 
-
-
-#determine if it's Christmas or opening day.  Set to C for Christmas, O for opening day, and R for any other game.
+#Adding a collumn for GameType
+# First determine if it's Christmas or opening day.  Set to C for Christmas, O for opening day, and R for any other game.
 totalViewersPerGame$gameType <- NULL
 for(i in 1:length(totalViewersPerGame$Game_Date))
 {
@@ -103,6 +134,41 @@ totalViewersPerGame$gameType <- as.factor(totalViewersPerGame$gameType);
 #------------------------------------------------------------------------------------------------------------------------------#
 
 
+#A Function that will calculate how many All-Stars are playing at the game.
+totalViewersPerGame$All_Star_Count <- NULL
+getAllStarCount <- function()
+{
+  for(i in 1:length(totalViewersPerGame$Game_Date))
+  {
+     year <- getYearFromDate(totalViewersPerGame$Game_Date[i])
+     homeAllStarCount <- lookUpAllStarCountFor(totalViewersPerGame$Home_Team[i], totalViewersPerGame$Month[i], year)
+     awayAllStarCount <- lookUpAllStarCountFor(totalViewersPerGame$Away_Team[i], totalViewersPerGame$Month[i], year)
+     totalViewersPerGame$All_Star_Count[i] = (homeAllStarCount + awayAllStarCount)
+  }
+  
+}
+
+head(totalViewersPerGame$All_Star_Count)
+
+totalViewersPerGame$Has_Lebron <- NULL
+hasLebron <- function()
+{
+  for(i in i:length(totalViewersPerGame$Game_ID))
+  {
+    if(totalViewersPerGame$Home_Team == "CLE" || totalViewersPerGame$Away_Team == "CLE")
+    {
+      totalViewersPerGame$Has_Lebron[i] = "YES"
+    } else {
+      totalViewersPerGame$Has_Lebron[i] = "NO"
+    }
+  }
+}
+
+hasLebron()
+
+#ranks
+>>>>>>> adee6b74780d85b454908e9f83278733f64c1ad1
+
 
 
 #--------------------------------------------------------------------------------------------------------------------------------#
@@ -116,7 +182,6 @@ teamRankings
 
 
 #use rankings2015 from 2015-2016 season for month of October 10/2016 only
-
 
 
 totalViewersPerGame$bestRankAmongTeams <- NULL;
@@ -166,8 +231,6 @@ while(j < length(totalViewersPerGame$Tot_Viewers))
 }
 
 totalViewersPerGame$gameType <- as.factor(totalViewersPerGame$gameType)
-#-------------------------------------------------------------------------------------------------------------------------------------------------------
-
 
 
 
