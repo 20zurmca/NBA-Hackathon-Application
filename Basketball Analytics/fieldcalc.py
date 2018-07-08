@@ -30,7 +30,7 @@ for play in bar:
             if games[my_game].get(player,False):
                 games[my_game][player][1] += [7200*(my_period-1)]
             else:
-                games[my_game][player] = [None,[7200*(my_period-1)]] #none is placeholder for team!
+                games[my_game][player] = [play2[10],[7200*(my_period-1)], 0] #play2[10] may not be accurate. who knows???
     elif play2[2] == "8":
         p1 = play2[11]
         p2 = play2[12]
@@ -38,17 +38,15 @@ for play in bar:
         if games[my_game].get(p1, False):
             games[my_game][p1][1] += [tim]
         else:
-            games[my_game][p1] = [None, [tim]]
+            games[my_game][p1] = [play2[10], [tim], 0]
         if games[my_game].get(p2, False):
             games[my_game][p2][1] += [tim]
         else:
-            games[my_game][p2] = [None, [tim]]
-        #if(("377f46" in p1 or "377f46" in p2) and "fac11e" in play2[0]):
-            #print(p1, games[my_game][p1])
-         #   print(p2, games[my_game][p2])
+            games[my_game][p2] = [play2[10], [tim], 0]
     cur_period = my_period
 #essentially each pair of numbers corresponds to an interval of time when the player is on the court during a game
 #2nd pass
+#adds +/- rating to each player on a per-game basis
 for play in bar:
     play2 = play.split(",")
     my_game = play2[0]
@@ -60,5 +58,9 @@ for play in bar:
             t2 = games[my_game][key][1][i*2+1]
             if t1 < tim <= t2:
                 on_court += [key]
-    print(play2[5], on_court)
-    
+    for player in on_court:
+        if games[my_game][player][0] == play2[10]:
+            games[my_game][player][2] += int(play2[7])
+        else:
+            games[my_game][player][2] -= int(play2[7])
+print(games)
