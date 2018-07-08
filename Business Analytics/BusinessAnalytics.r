@@ -1,11 +1,10 @@
 library(sqldf)
-<<<<<<< HEAD
 library(lubridate)
+
+getwd()
 setwd("ProjectRepos/NBAH18/Business\ Analytics")
 #setwd("/home/cameron/NBAH18/Business\ Analytics")
 
-=======
->>>>>>> c6669f5da9210f05df848b8a250bda1601944ebf
 
 #Before pushing, comment out my working directory and uncomment yours
 
@@ -16,9 +15,13 @@ setwd("ProjectRepos/NBAH18/Business\ Analytics")
 gameData <- read.csv("game_data.csv", header = T)
 playerData <- read.csv("player_data.csv", header = T)
 training<-read.csv("training_set.csv", header = T)
+testing<-read.csv("test_set.csv", header = T)
+
+head(testing)
 
 totalViewersPerGame <- sqldf('select Game_ID, Home_Team, Away_Team, Game_Date, sum("Rounded.Viewers") as Tot_Viewers from training group by Game_ID')
 
+head(totalViewersPerGame)
 #Looking at the distributing of totalViewersPerGame-We see that is is heavily skewed right
 qqnorm(totalViewersPerGame$Tot_Viewers)
 qqline(totalViewersPerGame$Tot_Viewers)
@@ -49,7 +52,6 @@ zStatCleveland <- (clevelandMeanViews - meanNumberTotalViewers)/(clevelandSd/sqr
 levels(totalViewersPerGame$Home_Team)
 
 
-<<<<<<< HEAD
 #analyzing specific dates for total viewers
 sqldf('select* from groupByQuery order by Tot_Viewers desc')
 
@@ -58,7 +60,7 @@ sqldf('select Home_Team, Away_Team from training where Game_ID = 21700015 and Ga
 
 
 #Convert all dates to months of the year
-groupByQuery$Month <- month(as.POSIXlt(groupByQuery$Game_Date, format = "%m/%d/%Y"))
+totalViewersPerGame$Month <- month(as.POSIXlt(groupByQuery$Game_Date, format = "%m/%d/%Y"))
 
 
 #average all CLE intl viewers 
@@ -72,7 +74,7 @@ gamesCLE <- sqldf('select count(*) from training where Home_Team = "CLE" OR Away
 totalViewersPerGame$gameType <- NULL
 for(i in 1:length(groupByQuery$Game_Date))
 {
-  if(totalViewersPerGame$Game_Date[i] == "12/25/2016" || totalViewersPerGame$Game_Date[i] == "12/25/2017" || totalViewersPerGame$Game_Date[i] == "12/25/2018")
+  if(totalViewersPerGame$Game_Date[i] == "12/25/2016" || totalViewersPerGame$Game_Date[i] == "12/25/2017")
   {
     totalViewersPerGame$gameType[i] = "C"
   }
@@ -88,7 +90,64 @@ for(i in 1:length(groupByQuery$Game_Date))
 }
 
 totalViewersPerGame$gameType <- as.factor(totalViewersPerGame$gameType);
-=======
+
+
+#ranks
+
+
+getWinsEnteringGame <- function(date)
+{
+  query <- paste("select Team, Wins_Entering_Gm from gameData where Game_Date =", date, "", sep = "\"")
+  sqldf(query)
+  return(sqldf(query));
+}
+
+
+#use rankings2015 from 2015-2016 season for month of October 10/2016 only
+rankings2015_2016 <- read.csv("rankings2015_2016.csv", header = T)
+
+
+totalViewersPerGame$highestRank <- NULL;
+
+j <- 1;
+while(j < length(totalViewersPerGame$Tot_Viewers))
+{
+  #if it's the month of October, use the highest ranking team from the previous season
+  if(totalViewersPerGame$Month[j] == 10)
+  {
+    for(i in 1:length(rankings2015_2016$Rk))
+    {
+      
+      if((totalViewersPerGame$Home_Team[j] == rankings2015_2016[i,3] || totalViewersPerGame$Away_Team[j] == rankings2015_2016[i,3]))
+      {
+        totalViewersPerGame$highestRank[j] <- i;
+        break;
+      }
+      
+    }
+  }
+
+  else
+  {
+    winsDF <- getWinsEnteringGame(totalViewersPerGame$Game_Date[j])
+    rankHome <- winsDF[which(winsDF$Team == totalViewersPerGame$Home_Team[j]),2]
+    rankAway <- winsDF[which(winsDF$Team == totalViewersPerGame$Away_Team[j]),2]
+    
+    if(rankHome > rankAway)
+    {
+      totalViewersPerGame$highestRank[j] = rankHome
+    }
+    
+    else
+    {
+      totalViewersPerGame$highestRank[j] = rankAway
+      
+    }
+    
+  }
+  j <- j+1
+}
+
 
 
 
