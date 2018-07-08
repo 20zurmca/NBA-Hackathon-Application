@@ -3,6 +3,7 @@
 
 library(sqldf)
 library(lubridate)
+library(stringi)
 
 getwd()
 #setwd("ProjectRepos/NBAH18/Business\ Analytics")
@@ -135,39 +136,41 @@ totalViewersPerGame$gameType <- as.factor(totalViewersPerGame$gameType);
 
 
 #A Function that will calculate how many All-Stars are playing at the game.
-totalViewersPerGame$All_Star_Count <- NULL
 getAllStarCount <- function()
 {
+  All_Star_Count <- NULL
   for(i in 1:length(totalViewersPerGame$Game_Date))
   {
      year <- getYearFromDate(totalViewersPerGame$Game_Date[i])
      homeAllStarCount <- lookUpAllStarCountFor(totalViewersPerGame$Home_Team[i], totalViewersPerGame$Month[i], year)
      awayAllStarCount <- lookUpAllStarCountFor(totalViewersPerGame$Away_Team[i], totalViewersPerGame$Month[i], year)
-     totalViewersPerGame$All_Star_Count[i] = (homeAllStarCount + awayAllStarCount)
+     All_Star_Count[i] = (homeAllStarCount + awayAllStarCount)
   }
-  
+  return(All_Star_Count)
 }
 
-head(totalViewersPerGame$All_Star_Count)
+totalViewersPerGame["All_Star_Count"] <- getAllStarCount()
 
-totalViewersPerGame$Has_Lebron <- NULL
+
 hasLebron <- function()
 {
+  Has_Lebron <- NULL
   for(i in i:length(totalViewersPerGame$Game_ID))
   {
-    if(totalViewersPerGame$Home_Team == "CLE" || totalViewersPerGame$Away_Team == "CLE")
+    if(totalViewersPerGame$Home_Team[i] == "CLE" || totalViewersPerGame$Away_Team[i] == "CLE")
     {
-      totalViewersPerGame$Has_Lebron[i] = "YES"
+      Has_Lebron[i] = "YES"
     } else {
-      totalViewersPerGame$Has_Lebron[i] = "NO"
+      Has_Lebron[i] = "NO"
     }
   }
+  return (Has_Lebron)
 }
 
-hasLebron()
+totalViewersPerGame["Has_Lebron"] <- hasLebron()
+
 
 #ranks
->>>>>>> adee6b74780d85b454908e9f83278733f64c1ad1
 
 
 
@@ -179,6 +182,8 @@ teamRankings <- data.table(gameData, key = "Game_Date")
 teamRankings <- teamRankings[,transform(.SD, teamRanking = rank(-Wins_Entering_Gm, ties.method = "min")), by = Game_Date]
 teamRankings <- teamRankings[,c("Game_Date", "Team", "Wins_Entering_Gm", "teamRanking")]
 teamRankings
+
+#gameData[91:length(gameData$Game_Date),c(3,4,6)]
 
 
 #use rankings2015 from 2015-2016 season for month of October 10/2016 only
