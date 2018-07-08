@@ -155,7 +155,7 @@ totalViewersPerGame["All_Star_Count"] <- getAllStarCount()
 hasLebron <- function()
 {
   Has_Lebron <- NULL
-  for(i in i:length(totalViewersPerGame$Game_ID))
+  for(i in 1:length(totalViewersPerGame$Game_ID))
   {
     if(totalViewersPerGame$Home_Team[i] == "CLE" || totalViewersPerGame$Away_Team[i] == "CLE")
     {
