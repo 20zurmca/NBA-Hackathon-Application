@@ -19,6 +19,9 @@ numberAllStarsPerTeam2016_2017 <- read.csv("number_all_stars_per_team_2016-2017.
 numberAllStarsPerTeam2015_2016 <- read.csv("number_all_stars_per_team_2015-2016.csv", header = T)
 testing<-read.csv("test_set.csv", header = T)
 
+#use rankings2015 from 2015-2016 season for month of October 10/2016 only
+rankings2015_2016 <- read.csv("rankings2015_2016.csv", header = T)
+
 hasTopFivePlayer <- read.csv("teams_with_top_players.csv", header = T)
 
 totalViewersPerGame <- sqldf('select Game_ID, Home_Team, Away_Team, Game_Date, sum("Rounded.Viewers") as Tot_Viewers from training group by Game_ID')
@@ -62,6 +65,10 @@ sqldf('select* from totalViewersPerGame order by Tot_Viewers desc')
 
 #specific game query
 sqldf('select Home_Team, Away_Team from training where Game_ID = 21700015 and Game_Date = "10/19/2017"')
+
+#Experimenting getting number of all stars for a team from numberAllStarsPerTeam2015_2016
+sqldf('select Number_of_All_Stars from numberAllStarsPerTeam2015_2016 where Team = "CLE"')$Number_of_All_Stars
+numberAllStarsPerTeam2015_2016[numberAllStarsPerTeam2015_2016$Team == "CLE",]$Number_of_All_Stars
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #################################################################### FUNCTIONS AND APPENDED COLLUMNS #########################################################################
@@ -69,8 +76,8 @@ sqldf('select Home_Team, Away_Team from training where Game_ID = 21700015 and Ga
 totalViewersPerGame$Month <- month(as.POSIXlt(totalViewersPerGame$Game_Date, format = "%m/%d/%Y"))
 
 
-
-#determine if it's Christmas or opening day.  Set to C for Christmas, O for opening day, and R for any other game.
+#Adding a collumn for GameType
+# First determine if it's Christmas or opening day.  Set to C for Christmas, O for opening day, and R for any other game.
 totalViewersPerGame$gameType <- NULL
 for(i in 1:length(totalViewersPerGame$Game_Date))
 {
@@ -92,6 +99,16 @@ for(i in 1:length(totalViewersPerGame$Game_Date))
 totalViewersPerGame$gameType <- as.factor(totalViewersPerGame$gameType);
 
 
+#A Function that will calculate how many all stars are playing at the game.
+totalViewersPerGame$All_Star_Count <- NULL
+
+getAllStarCount <- function()
+{
+  
+  
+}
+
+
 #ranks
 
 
@@ -105,9 +122,6 @@ getWinsEnteringGame <- function(date)
 
 gameData[91:length(gameData$Game_Date),c(3,4,6)]
 
-
-#use rankings2015 from 2015-2016 season for month of October 10/2016 only
-rankings2015_2016 <- read.csv("rankings2015_2016.csv", header = T)
 
 
 totalViewersPerGame$highestRank <- NULL;
