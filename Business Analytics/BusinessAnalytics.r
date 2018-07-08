@@ -167,7 +167,7 @@ hasLebron <- function()
   return (Has_Lebron)
 }
 
-totalViewersPerGame["Has_Lebron"] <- hasLebron()
+totalViewersPerGame$Has_Lebron <- hasLebron()
 
 
 #ranks
