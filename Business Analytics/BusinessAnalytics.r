@@ -2,8 +2,8 @@ library(sqldf)
 library(lubridate)
 
 getwd()
-setwd("ProjectRepos/NBAH18/Business\ Analytics")
-#setwd("/home/cameron/NBAH18/Business\ Analytics")
+#setwd("ProjectRepos/NBAH18/Business\ Analytics")
+setwd("/home/cameron/NBAH18/Business\ Analytics")
 
 
 #Before pushing, comment out my working directory and uncomment yours
@@ -15,6 +15,8 @@ setwd("ProjectRepos/NBAH18/Business\ Analytics")
 gameData <- read.csv("game_data.csv", header = T)
 playerData <- read.csv("player_data.csv", header = T)
 training<-read.csv("training_set.csv", header = T)
+numberAllStarsPerTeam2016_2017 <- read.csv("number_all_stars_per_team_2016-2017.csv", header = T)
+numberAllStarsPerTeam2015_2016 <- read.csv("number_all_stars_per_team_2015-2016.csv", header = T)
 testing<-read.csv("test_set.csv", header = T)
 
 head(testing)
@@ -60,7 +62,7 @@ sqldf('select Home_Team, Away_Team from training where Game_ID = 21700015 and Ga
 
 
 #Convert all dates to months of the year
-totalViewersPerGame$Month <- month(as.POSIXlt(groupByQuery$Game_Date, format = "%m/%d/%Y"))
+totalViewersPerGame$Month <- month(as.POSIXlt(totalViewersPerGame$Game_Date, format = "%m/%d/%Y"))
 
 
 #average all CLE intl viewers 
