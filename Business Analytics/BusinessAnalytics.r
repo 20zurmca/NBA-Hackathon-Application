@@ -1,3 +1,6 @@
+#Cam, run lines 106 - 112 and see what it does
+
+
 library(sqldf)
 library(lubridate)
 
@@ -20,6 +23,8 @@ numberAllStarsPerTeam2015_2016 <- read.csv("number_all_stars_per_team_2015-2016.
 testing<-read.csv("test_set.csv", header = T)
 
 hasTopFivePlayer <- read.csv("teams_with_top_players.csv", header = T)
+
+rankings2015_2016 <- read.csv("rankings2015_2016.csv", header = T)
 
 totalViewersPerGame <- sqldf('select Game_ID, Home_Team, Away_Team, Game_Date, sum("Rounded.Viewers") as Tot_Viewers from training group by Game_ID')
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -65,6 +70,10 @@ sqldf('select Home_Team, Away_Team from training where Game_ID = 21700015 and Ga
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #################################################################### FUNCTIONS AND APPENDED COLLUMNS #########################################################################
+
+#MONTHS AND TYPES OF GAMES
+
+#-----------------------------------------------------------------------------------------------------------------------------#
 #Convert all dates to months of the year
 totalViewersPerGame$Month <- month(as.POSIXlt(totalViewersPerGame$Game_Date, format = "%m/%d/%Y"))
 
@@ -91,26 +100,26 @@ for(i in 1:length(totalViewersPerGame$Game_Date))
 
 totalViewersPerGame$gameType <- as.factor(totalViewersPerGame$gameType);
 
-
-#ranks
-
-
-getWinsEnteringGame <- function(date)
-{
-  query <- paste("select Team, Wins_Entering_Gm from gameData where Game_Date =", date, "", sep = "\"")
-  sqldf(query)
-  return(sqldf(query));
-}
+#------------------------------------------------------------------------------------------------------------------------------#
 
 
-gameData[91:length(gameData$Game_Date),c(3,4,6)]
+
+
+#--------------------------------------------------------------------------------------------------------------------------------#
+library(data.table)
+
+#Ranking teams partitioned by game date
+teamRankings <- data.table(gameData, key = "Game_Date")
+teamRankings <- teamRankings[,transform(.SD, teamRanking = rank(-Wins_Entering_Gm, ties.method = "min")), by = Game_Date]
+teamRankings <- teamRankings[,c("Game_Date", "Team", "Wins_Entering_Gm", "teamRanking")]
+teamRankings
 
 
 #use rankings2015 from 2015-2016 season for month of October 10/2016 only
-rankings2015_2016 <- read.csv("rankings2015_2016.csv", header = T)
 
 
-totalViewersPerGame$highestRank <- NULL;
+
+totalViewersPerGame$bestRankAmongTeams <- NULL;
 
 j <- 1;
 while(j < length(totalViewersPerGame$Tot_Viewers))
@@ -123,7 +132,7 @@ while(j < length(totalViewersPerGame$Tot_Viewers))
       
       if((totalViewersPerGame$Home_Team[j] == rankings2015_2016[i,3] || totalViewersPerGame$Away_Team[j] == rankings2015_2016[i,3]))
       {
-        totalViewersPerGame$highestRank[j] <- i;
+        totalViewersPerGame$bestRankAmongTeams[j] <- i;
         break;
       }
       
@@ -132,21 +141,26 @@ while(j < length(totalViewersPerGame$Tot_Viewers))
 
   else
   {
-    winsDF <- getWinsEnteringGame(totalViewersPerGame$Game_Date[j])
-    rankHome <- winsDF[which(winsDF$Team == totalViewersPerGame$Home_Team[j]),2]
-    rankAway <- winsDF[which(winsDF$Team == totalViewersPerGame$Away_Team[j]),2]
+    
+    homeTeam <- totalViewersPerGame$Home_Team[j]
+    awayTeam <- totalViewersPerGame$Away_Team[j]
+    
+    rankHome <- gameData[(which("Game_Date" == totalViewersPerGame$Game_Date[j])) && (which("Team" == homeTeam)),"teamRanking"]
+    rankAway <- gameData[(which("Game_Date" == totalViewersPerGame$Game_Date[j])) && (which("Team" == awayTeam)),"teamRanking"]
+    
+   # print(rankHome)
+    
+    
     
     if(rankHome > rankAway)
     {
-      totalViewersPerGame$highestRank[j] = rankHome
+      totalViewersPerGame$bestRankAmongTeams[j] <- rankAway
     }
     
     else
     {
-      totalViewersPerGame$highestRank[j] = rankAway
-      
+      totalViewersPerGame$bestRankAmongTeams[j] <- rankHome
     }
-    
   }
   j <- j+1
 }
