@@ -37,7 +37,15 @@ lebronPlayerData <- sqldf('select Season, Game_ID, Game_Date, Name, Active_Statu
 
 lebronActiveGames <- sqldf('select * from lebronPlayerData INNER JOIN clevelandGames on clevelandGames.Game_Date = lebronPlayerData.Game_Date where Active_Status = "Active"')
 lebronActiveGames <- lebronActiveGames[ , -c(6,9)] #cleaning duplicates
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+viewsByTime_Zone <- sqldf('select Time_Zone_Of_Game, sum("Tot_Viewers") as Tot_Viewers from totalViewersPerGame group by Time_Zone_of_Game')
+
+eastGames     <- sqldf('select Game_ID, Home_Team, Away_Team, Game_Date, Time_Zone_Of_Game, Tot_Viewers from totalViewersPerGame where Time_Zone_Of_Game = "EAST"')
+centralGames  <- sqldf('select Game_ID, Home_Team, Away_Team, Game_Date, Time_Zone_Of_Game, Tot_Viewers from totalViewersPerGame where Time_Zone_Of_Game = "CENTRAL"')
+mountainGames <- sqldf('select Game_ID, Home_Team, Away_Team, Game_Date, Time_Zone_Of_Game, Tot_Viewers from totalViewersPerGame where Time_Zone_Of_Game = "MOUNTAIN"')
+pacificGames  <- sqldf('select Game_ID, Home_Team, Away_Team, Game_Date, Time_Zone_Of_Game, Tot_Viewers from totalViewersPerGame where Time_Zone_Of_Game = "PACIFIC"')
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ###################################################### CHARTS #################################################################################################
 
@@ -268,11 +276,28 @@ computeMedianMatchup<- function()
 {
   medianViewsForMatchup <- NULL
   
+  myMedianDict <- list()
+  
   for(i in 1:length(totalViewersPerGame$Game_ID))
   {
+    homeTeam <- totalViewersPerGame$Home_Team[i]
+    awayTeam <- totalViewersPerGame$Away_Team[i]
     
-    medianViewsForMatchup[i] <- median(getHelperQuery(totalViewersPerGame$Home_Team[i], totalViewersPerGame$Away_Team[i]))
-    
+    if(is.integer(myMedianDict[paste0(homeTeam," vs. ", awayTeam)]))
+      {
+        medianViewsForMatchup[i] <- myMedianDict[paste0(homeTeam," vs. ", awayTeam)]
+        
+      } else if(is.integer(myMedianDict[paste0(awayTeam," vs. ", homeTeam)]))
+      {
+        medianViewsForMatchup[i] <- myMedianDict[paste0(awayTeam," vs. ", homeTeam)]
+      } else {
+        
+        medianView <- median(getHelperQuery(homeTeam, awayTeam))
+        
+        medianViewsForMatchup[i] <- medianView
+        myMedianDict[paste0(homeTeam," vs. ", awayTeam)] <- medianView
+        myMedianDict[paste0(awayTeam," vs. ", homeTeam)] <- medianView
+      }
   }
   return(medianViewsForMatchup)
 }
@@ -286,11 +311,28 @@ computeMeanMatchup<- function()
 {
   meanViewsForMatchup <- NULL
   
+  myMeanDict <- list()
+  
   for(i in 1:length(totalViewersPerGame$Game_ID))
   {
+    homeTeam <- totalViewersPerGame$Home_Team[i]
+    awayTeam <- totalViewersPerGame$Away_Team[i]
     
-    meanViewsForMatchup[i] <- mean(getHelperQuery(totalViewersPerGame$Home_Team[i], totalViewersPerGame$Away_Team[i]))
-    
+    if(is.integer(myMeanDict[paste0(homeTeam," vs. ", awayTeam)]))
+    {
+      meanViewsForMatchup[i] <- myMeanDict[paste0(homeTeam," vs. ", awayTeam)]
+      
+    } else if(is.integer(myMeanDict[paste0(awayTeam," vs. ", homeTeam)]))
+    {
+      meanViewsForMatchup[i] <- myMeanDict[paste0(awayTeam," vs. ", homeTeam)]
+    } else {
+      
+      meanView <- mean(getHelperQuery(homeTeam, awayTeam))
+      
+      meanViewsForMatchup[i] <- meanView
+      myMeanDict[paste0(homeTeam," vs. ", awayTeam)] <- meanView
+      myMeanDict[paste0(awayTeam," vs. ", homeTeam)] <- meanView
+    }
   }
   return(meanViewsForMatchup)
 }
@@ -327,7 +369,7 @@ while(j < length(totalViewersPerGame$Tot_Viewers))
       if((totalViewersPerGame$Home_Team[j] == rankings2015_2016[i,3] || totalViewersPerGame$Away_Team[j] == rankings2015_2016[i,3]))
       {
         totalViewersPerGame$bestRankAmongTeams[j] <- i;
-        break;
+        break;s
       }
       
     }
