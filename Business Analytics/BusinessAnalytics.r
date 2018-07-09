@@ -169,7 +169,6 @@ hasLebron <- function()
 
 totalViewersPerGame$Has_Lebron <- hasLebron()
 
-
 #ranks
 
 
