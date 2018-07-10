@@ -3,10 +3,9 @@ library(lubridate)
 library(stringi)
 library(data.table)
 
-
 getwd()
 #setwd("ProjectRepos/NBAH18/Business\ Analytics")
-setwd("/home/cameron/NBAH18/Business\ Analytics")
+#setwd("/home/cameron/NBAH18/Business\ Analytics")
 source("functions.R")
 
 #Before pushing, comment out my working directory and uncomment yours
@@ -155,7 +154,6 @@ hasLebron <- function()
   return (Has_Lebron)
 }
 
-testing$Has_Lebron <- hasLebron()
 testing["Is_Lebron_Playing"] <- hasLebron()
 
 testing$Is_Lebron_Playing<- as.factor(testing$Is_Lebron_Playing)
@@ -238,7 +236,7 @@ computeMedianMatchup<- function()
         #Taking average viewership of both teams
         homeTeamViewership = median(sqldf(paste0("select Tot_Viewers from totalViewersPerGame where Home_Team = '", homeTeam, "'"))$Tot_Viewers)
         awayTeamViewership = median(sqldf(paste0("select Tot_Viewers from totalViewersPerGame where Away_Team = '", awayTeam, "'"))$Tot_Viewers)
-        medianView <- median(c(homeTeam, awayTeamViewership))
+        medianView <- median(c(homeTeamViewership, awayTeamViewership))
       }
       medianViewsForMatchup[i] <- medianView
       
@@ -276,9 +274,9 @@ computeMeanMatchup<- function()
       if(is.nan(meanView))
       {
         #Taking average viewership of both teams
-        homeTeamViewership = mean(sqldf(paste0("select Tot_Viewers from totalViewersPerGame where Home_Team = '", homeTeam, "'"))$Tot_Viewers)
-        awayTeamViewership = mean(sqldf(paste0("select Tot_Viewers from totalViewersPerGame where Away_Team = '", awayTeam, "'"))$Tot_Viewers)
-        meanView <- mean(c(homeTeam, awayTeamViewership))
+        homeTeamViewership = sqldf(paste0("select avg(Tot_Viewers) as Tot_Viewers from totalViewersPerGame where Home_Team = '", homeTeam, "'"))$Tot_Viewers
+        awayTeamViewership = sqldf(paste0("select avg(Tot_Viewers) as Tot_Viewers from totalViewersPerGame where Away_Team = '", awayTeam, "'"))$Tot_Viewers
+        meanView <- mean(c(homeTeamViewership, awayTeamViewership))
       }
       
       meanViewsForMatchup[i] <- meanView
@@ -313,5 +311,4 @@ testing["Is_Sat_or_Sun"] <- isWeekend()
 
 testing$Is_Sat_or_Sun <- as.factor(testing$Is_Sat_or_Sun)
 
-sqldf('select * from testing where Home_Team = "CLE" and Away_Team = "MEM"')
-sqldf('select * from testing where Home_Team = "MEM" and Away_Team = "CLE"')
+

@@ -518,9 +518,6 @@ z.test(mean(myTable$Tot_Viewers), meanNumberTotalViewers, sd(myTable$Tot_Viewers
 teamRankings <- data.table(gameData, key = "Game_Date")
 teamRankings <- teamRankings[,transform(.SD, teamRanking = rank(-Wins_Entering_Gm, ties.method = "min")), by = Game_Date]
 teamRankings <- teamRankings[,c("Game_Date", "Team", "Wins_Entering_Gm", "teamRanking")]
-teamRankings
-
-#gameData[91:length(gameData$Game_Date),c(3,4,6)]
 
 
 #use rankings2015 from 2015-2016 season for month of October 10/2016 only
