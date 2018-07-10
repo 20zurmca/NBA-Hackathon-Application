@@ -269,9 +269,6 @@ computeMeanMatchup<- function()
     {
       meanViewsForMatchup[i] <- myMeanDict[paste0(homeTeam," vs. ", awayTeam)]
       
-    } else if(is.integer(myMeanDict[paste0(awayTeam," vs. ", homeTeam)]))
-    {
-      meanViewsForMatchup[i] <- myMeanDict[paste0(awayTeam," vs. ", homeTeam)]
     } else {
       
       meanView <- mean(getHelperQuery(homeTeam, awayTeam))
@@ -316,3 +313,5 @@ testing["Is_Sat_or_Sun"] <- isWeekend()
 
 testing$Is_Sat_or_Sun <- as.factor(testing$Is_Sat_or_Sun)
 
+sqldf('select * from testing where Home_Team = "CLE" and Away_Team = "MEM"')
+sqldf('select * from testing where Home_Team = "MEM" and Away_Team = "CLE"')
