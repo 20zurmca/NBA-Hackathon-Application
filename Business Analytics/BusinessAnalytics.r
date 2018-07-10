@@ -6,8 +6,8 @@ library(stringi)
 library(data.table)
 
 getwd()
-#setwd("ProjectRepos/NBAH18/Business\ Analytics")
-setwd("/home/cameron/NBAH18/Business\ Analytics")
+setwd("ProjectRepos/NBAH18/Business\ Analytics")
+#setwd("/home/cameron/NBAH18/Business\ Analytics")
 source("functions.R")
 
 #Before pushing, comment out my working directory and uncomment yours
@@ -25,6 +25,7 @@ testing<-read.csv("test_set.csv", header = T)
 
 #use rankings2015 from 2015-2016 season for month of October 10/2016 only
 rankings2015_2016 <- read.csv("rankings2015_2016.csv", header = T)
+rankings2016_2017 <- read.csv("rankings2016_2017.csv", header = T)
 hasTopFivePlayer2015_2016 <- read.csv("teams_with_top_players_2015-2016.csv", header = T)
 hasTopFivePlayer2016_2017 <- read.csv("teams_with_top_players_2016-2017.csv", header = T)
 time_zones <- read.csv("time_zones.csv", header = T)
@@ -366,6 +367,54 @@ totalViewersPerGame["Is_Sat_or_Sun"] <- isWeekend()
 
 totalViewersPerGame$Is_Sat_or_Sun <- as.factor(totalViewersPerGame$Is_Sat_or_Sun)
 
+
+#loads the best ranking team
+loadBestRankingTeam <- function()
+{
+  j <- 1;
+  while(j < length(totalViewersPerGame$Tot_Viewers))
+  {
+    #if it's the month of October, use the highest ranking team from the previous season
+    if(totalViewersPerGame$Month[j] == 10 && getYearFromDate(totalViewersPerGame$Game_Date[j]) == 16)
+    {
+      for(i in 1:length(rankings2015_2016$Rk))
+      {
+        if((totalViewersPerGame$Home_Team[j] == rankings2015_2016[i,3] || totalViewersPerGame$Away_Team[j] == rankings2015_2016[i,3]))
+        {
+          totalViewersPerGame$bestRankAmongTeams[j] <- i;
+          break;
+        }
+      }
+    } else if(totalViewersPerGame$Month[j] == 10 && getYearFromDate(totalViewersPerGame$Game_Date[j]) == 17)
+    {
+      for(i in 1:length(rankings2016_2017$Rk))
+      {
+        if((totalViewersPerGame$Home_Team[j] == rankings2016_2017[i,3] || totalViewersPerGame$Away_Team[j] == rankings2016_2017[i,3]))
+        {
+          totalViewersPerGame$bestRankAmongTeams[j] <- i;
+          break;
+        }
+      }
+    } else  
+    {
+      homeTeam <- totalViewersPerGame$Home_Team[j]
+      awayTeam <- totalViewersPerGame$Away_Team[j]
+      
+      rankHome <- sqldf(paste0("select teamRanking from teamRankings where Game_Date = '", totalViewersPerGame$Game_Date[j], "' and Team = '", totalViewersPerGame$Home_Team[j], "'"))
+      rankAway <- sqldf(paste0("select teamRanking from teamRankings where Game_Date = '", totalViewersPerGame$Game_Date[j], "' and Team = '", totalViewersPerGame$Away_Team[j], "'"))
+      
+      if(rankHome$teamRanking > rankAway$teamRanking)
+      {
+        totalViewersPerGame$bestRankAmongTeams[j] <- rankAway$teamRanking
+      } else
+      {
+        totalViewersPerGame$bestRankAmongTeams[j] <- rankHome$teamRanking
+      }
+    }
+    j <- j+1
+  }
+}
+
 #################################################### MORE QUERIES ########################################33
 viewsByTime_Zone <- sqldf('select Time_Zone_Of_Game, sum("Tot_Viewers") as Tot_Viewers from totalViewersPerGame group by Time_Zone_of_Game')
 
@@ -461,6 +510,15 @@ mean(octoberGames$Tot_Viewers)
 z.test(mean(octoberGames$Tot_Viewers), meanNumberTotalViewers, sd(octoberGames$Tot_Viewers), length(octoberGames$Tot_Viewers), 0.95, "greater")
 #Yes October is statistically significant at the 1% level (p << .01)
 
+
+#Testing averages depending on best ranked team in the matchup
+
+rankViewAverages <- sqldf('select bestRankAmongTeams, avg(Tot_Viewers) as Avg_Viewers from totalViewersPerGame group by bestRankAmongTeams')
+plot(rankViewAverages$Avg_Viewers~rankViewAverages$bestRankAmongTeams)
+myTable <- sqldf('select Tot_Viewers from totalViewersPerGame where bestRankAmongTeams = 1')
+
+z.test(mean(myTable$Tot_Viewers), meanNumberTotalViewers, sd(myTable$Tot_Viewers), length(myTable$Tot_Viewers), 0.95, "greater")
+
 #ranks
 
 #--------------------------------------------------------------------------------------------------------------------------------#
@@ -479,51 +537,7 @@ teamRankings
 
 totalViewersPerGame$bestRankAmongTeams <- NULL;
 
-j <- 1;
-while(j < length(totalViewersPerGame$Tot_Viewers))
-{
-  #if it's the month of October, use the highest ranking team from the previous season
-  if(totalViewersPerGame$Month[j] == 10)
-  {
-    for(i in 1:length(rankings2015_2016$Rk))
-    {
-      
-      if((totalViewersPerGame$Home_Team[j] == rankings2015_2016[i,3] || totalViewersPerGame$Away_Team[j] == rankings2015_2016[i,3]))
-      {
-        totalViewersPerGame$bestRankAmongTeams[j] <- i;
-        break;
-      }
-      
-    }
-  }
+#function to get best ranking team
 
-  else
-  {
-    
-    homeTeam <- totalViewersPerGame$Home_Team[j]
-    awayTeam <- totalViewersPerGame$Away_Team[j]
-    
-    rankHome <- gameData[(which("Game_Date" == totalViewersPerGame$Game_Date[j])) && (which("Team" == homeTeam)),"teamRanking"]
-    rankAway <- gameData[(which("Game_Date" == totalViewersPerGame$Game_Date[j])) && (which("Team" == awayTeam)),"teamRanking"]
-    
-   # print(rankHome)
-    
-    
-    
-    if(rankHome > rankAway)
-    {
-      totalViewersPerGame$bestRankAmongTeams[j] <- rankAway
-    }
-    
-    else
-    {
-      totalViewersPerGame$bestRankAmongTeams[j] <- rankHome
-    }
-  }
-  j <- j+1
-}
-
-totalViewersPerGame$gameType <- as.factor(totalViewersPerGame$gameType)
-
-
+loadBestRankingTeam()
 
