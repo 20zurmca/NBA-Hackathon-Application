@@ -307,35 +307,6 @@ computeMedianMatchup<- function()
 totalViewersPerGame["Median_Views_Per_Matchup"] <- computeMedianMatchup()
 
 
-# A function that will compute the mean number of viewers for the match-up
-
-computeMeanMatchup<- function()
-{
-  meanViewsForMatchup <- NULL
-  
-  myMeanDict <- list()
-  
-  for(i in 1:length(totalViewersPerGame$Game_ID))
-  {
-    homeTeam <- totalViewersPerGame$Home_Team[i]
-    awayTeam <- totalViewersPerGame$Away_Team[i]
-    
-    if(is.integer(myMeanDict[paste0(homeTeam," vs. ", awayTeam)]))
-    {
-      meanViewsForMatchup[i] <- myMeanDict[paste0(homeTeam," vs. ", awayTeam)]
-      
-    } else {
-      meanView <- mean(getHelperQuery(homeTeam, awayTeam))
-      
-      meanViewsForMatchup[i] <- meanView
-      myMeanDict[paste0(homeTeam," vs. ", awayTeam)] <- meanView
-    }
-  }
-  return(meanViewsForMatchup)
-}
-
-totalViewersPerGame["Mean_Views_Per_Matchup"] <- computeMeanMatchup()
-
 #Appending a Row "Is_Weekend": 'Yes' = saturday or sunday, 'No' = else. Recall sat/sunday were statistically significant for viewership
 
 isWeekend <- function()
