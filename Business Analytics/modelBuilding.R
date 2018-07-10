@@ -40,22 +40,29 @@ bestRankAmongTeams <- partitionedTraining$bestRankAmongTeams
 
 totViewers <- partitionedTraining$Tot_Viewers
 
-#running lm 
-mreg <- lm(totViewers ~ month + isWeekend + medianViewsPerMatchUp + bestRankAmongTeams + gameType)
-summary(mreg)
+#running 4 variable lm 
+model1 <- lm(totViewers ~ month + medianViewsPerMatchUp + bestRankAmongTeams + gameType)
 
-aov(formula = mreg)
-plot(mreg)
+summary(model1)
+
+aov(formula = model1)
+plot(model1)
+
 
 #running two attribute model
-mregTwo <- lm(totViewers ~ month + medianViewsPerMatchUp)
-summary(mregTwo)
-aov(mregTwo)
+model2 <- lm(totViewers ~ month + medianViewsPerMatchUp)
 
-summary(mregTwo)  
-plot(mregTwo)
+summary(model2)
+aov(model2)
+plot(model2)
 
-mregThree <- lm(totViewers ~ month + medianViewsPerMatchUp + isLebron )
-summary(mregThree)
+#running 3 attribute model
+model3 <- lm(totViewers ~ month + medianViewsPerMatchUp + gameType)
+summary(model3)
+aov(model3)
+plot(model3)
+
+newpt <- data.frame(month = partitionedTraining$Month[2], medianViewsPerMatchUp = partitionedTraining$Median_Views_Per_Matchup[2], bestRankAmongTeams = partitionedTraining$bestRankAmongTeams[2], gameType = partitionedTraining$gameType[2], se.fit = T)
+predict(model1, newdata = newpt)
 
   
