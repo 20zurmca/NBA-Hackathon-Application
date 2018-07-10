@@ -24,6 +24,8 @@ numberAllStarsPerTeam2015_2016 <- read.csv("number_all_stars_per_team_2015-2016.
 hasTopFivePlayer2015_2016 <- read.csv("teams_with_top_players_2015-2016.csv", header = T)
 hasTopFivePlayer2016_2017 <- read.csv("teams_with_top_players_2016-2017.csv", header = T)
 time_zones <- read.csv("time_zones.csv", header = T)
+rankings2015_2016 <- read.csv("rankings2015_2016.csv", header = T)
+rankings2016_2017 <- read.csv("rankings2016_2017.csv", header = T)
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -312,3 +314,51 @@ testing["Is_Sat_or_Sun"] <- isWeekend()
 testing$Is_Sat_or_Sun <- as.factor(testing$Is_Sat_or_Sun)
 
 
+
+loadBestRankingTeam <- function()
+{
+  j <- 1;
+  while(j < length(testing$Tot_Viewers))
+  {
+    #if it's the month of October, use the highest ranking team from the previous season
+    if(testing$Month[j] == 10 && getYearFromDate(testing$Game_Date[j]) == 16)
+    {
+      for(i in 1:length(rankings2015_2016$Rk))
+      {
+        if((testing$Home_Team[j] == rankings2015_2016[i,3] || testing$Away_Team[j] == rankings2015_2016[i,3]))
+        {
+          testing$bestRankAmongTeams[j] <- i;
+          break;
+        }
+      }
+    } else if(testing$Month[j] == 10 && getYearFromDate(testing$Game_Date[j]) == 17)
+    {
+      for(i in 1:length(rankings2016_2017$Rk))
+      {
+        if((testing$Home_Team[j] == rankings2016_2017[i,3] || testing$Away_Team[j] == rankings2016_2017[i,3]))
+        {
+          testing$bestRankAmongTeams[j] <- i;
+          break;
+        }
+      }
+    } else  
+    {
+      homeTeam <- testing$Home_Team[j]
+      awayTeam <- testing$Away_Team[j]
+      
+      rankHome <- sqldf(paste0("select teamRanking from teamRankings where Game_Date = '", testing$Game_Date[j], "' and Team = '", testing$Home_Team[j], "'"))
+      rankAway <- sqldf(paste0("select teamRanking from teamRankings where Game_Date = '", testing$Game_Date[j], "' and Team = '", testing$Away_Team[j], "'"))
+      
+      if(rankHome$teamRanking > rankAway$teamRanking)
+      {
+        testing$bestRankAmongTeams[j] <- rankAway$teamRanking
+      } else
+      {
+        testing$bestRankAmongTeams[j] <- rankHome$teamRanking
+      }
+    }
+    j <- j+1
+  }
+}
+
+loadBestRankingTeam()
