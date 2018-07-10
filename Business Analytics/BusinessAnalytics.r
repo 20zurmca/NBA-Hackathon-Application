@@ -122,7 +122,7 @@ lookUpTopPlayerStatusFor <- function(team, month, year)
 getHelperQuery <- function(home, away)
 {
 
-  return(sqldf(paste0("select * from totalViewersPerGame where Home_Team ='", home, "'and Away_Team = '", away, "' or Home_Team = '", away, "' and Away_Team = '", home, "'"))$Tot_Viewers)
+  return(sqldf(paste0("select Tot_Viewers from totalViewersPerGame where Home_Team ='", home, "'and Away_Team = '", away, "'"))$Tot_Viewers)
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -292,16 +292,12 @@ computeMedianMatchup<- function()
       {
         medianViewsForMatchup[i] <- myMedianDict[paste0(homeTeam," vs. ", awayTeam)]
         
-      } else if(is.integer(myMedianDict[paste0(awayTeam," vs. ", homeTeam)]))
-      {
-        medianViewsForMatchup[i] <- myMedianDict[paste0(awayTeam," vs. ", homeTeam)]
       } else {
         
         medianView <- median(getHelperQuery(homeTeam, awayTeam))
         
         medianViewsForMatchup[i] <- medianView
         myMedianDict[paste0(homeTeam," vs. ", awayTeam)] <- medianView
-        myMedianDict[paste0(awayTeam," vs. ", homeTeam)] <- medianView
       }
   }
   return(medianViewsForMatchup)
@@ -327,16 +323,11 @@ computeMeanMatchup<- function()
     {
       meanViewsForMatchup[i] <- myMeanDict[paste0(homeTeam," vs. ", awayTeam)]
       
-    } else if(is.integer(myMeanDict[paste0(awayTeam," vs. ", homeTeam)]))
-    {
-      meanViewsForMatchup[i] <- myMeanDict[paste0(awayTeam," vs. ", homeTeam)]
     } else {
-      
       meanView <- mean(getHelperQuery(homeTeam, awayTeam))
       
       meanViewsForMatchup[i] <- meanView
       myMeanDict[paste0(homeTeam," vs. ", awayTeam)] <- meanView
-      myMeanDict[paste0(awayTeam," vs. ", homeTeam)] <- meanView
     }
   }
   return(meanViewsForMatchup)
