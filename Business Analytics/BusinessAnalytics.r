@@ -219,7 +219,6 @@ hasLebron <- function()
   return (Has_Lebron)
 }
 
-totalViewersPerGame$Has_Lebron <- hasLebron()
 totalViewersPerGame["Is_Lebron_Playing"] <- hasLebron()
 
 totalViewersPerGame$Is_Lebron_Playing<- as.factor(totalViewersPerGame$Is_Lebron_Playing)
