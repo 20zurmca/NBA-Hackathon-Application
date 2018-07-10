@@ -5,7 +5,7 @@ library(data.table)
 
 getwd()
 #setwd("ProjectRepos/NBAH18/Business\ Analytics")
-#setwd("/home/cameron/NBAH18/Business\ Analytics")
+setwd("/home/cameron/NBAH18/Business\ Analytics")
 source("functions.R")
 
 #Before pushing, comment out my working directory and uncomment yours
@@ -122,7 +122,6 @@ getAllStarCount <- function()
 }
 
 testing["All_Star_Count"] <- getAllStarCount()
-
 
 #A Function that determines if Lebron is in the game
 hasLebron <- function()
