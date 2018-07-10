@@ -275,11 +275,22 @@ testing["Is_Sat_or_Sun"] <- isWeekend()
 testing$Is_Sat_or_Sun <- as.factor(testing$Is_Sat_or_Sun)
 
 
+#Ranking teams partitioned by game date
+teamRankings <- data.table(gameData, key = "Game_Date")
+teamRankings <- teamRankings[,transform(.SD, teamRanking = rank(-Wins_Entering_Gm, ties.method = "min")), by = Game_Date]
+teamRankings <- teamRankings[,c("Game_Date", "Team", "Wins_Entering_Gm", "teamRanking")]
+
+
 
 loadBestRankingTeam <- function()
 {
   j <- 1;
-  while(j < length(testing$Tot_Viewers))
+  #used for SQL comparison
+  testing$revisedDate <- as.character(as.Date(as.character(testing$Game_Date), format = "%m/%d/%Y"))
+  teamRankings$revisedDate <- as.character(as.Date(as.character(teamRankings$Game_Date), format = "%m/%d/%Y"))
+  bestRankAmongTeams <- NULL
+  #testing$bestRankAmongTeams <- NULL
+  while(j <= length(testing$Season))
   {
     #if it's the month of October, use the highest ranking team from the previous season
     if(testing$Month[j] == 10 && getYearFromDate(testing$Game_Date[j]) == 16)
@@ -288,7 +299,8 @@ loadBestRankingTeam <- function()
       {
         if((testing$Home_Team[j] == rankings2015_2016[i,3] || testing$Away_Team[j] == rankings2015_2016[i,3]))
         {
-          testing$bestRankAmongTeams[j] <- i;
+         # testing$bestRankAmongTeams[j] <- i;
+          bestRankAmongTeams[j] <- i
           break;
         }
       }
@@ -298,7 +310,8 @@ loadBestRankingTeam <- function()
       {
         if((testing$Home_Team[j] == rankings2016_2017[i,3] || testing$Away_Team[j] == rankings2016_2017[i,3]))
         {
-          testing$bestRankAmongTeams[j] <- i;
+        #  testing$bestRankAmongTeams[j] <- i;
+          bestRankAmongTeams[j] <- i
           break;
         }
       }
@@ -307,19 +320,27 @@ loadBestRankingTeam <- function()
       homeTeam <- testing$Home_Team[j]
       awayTeam <- testing$Away_Team[j]
       
-      rankHome <- sqldf(paste0("select teamRanking from teamRankings where Game_Date = '", testing$Game_Date[j], "' and Team = '", testing$Home_Team[j], "'"))
-      rankAway <- sqldf(paste0("select teamRanking from teamRankings where Game_Date = '", testing$Game_Date[j], "' and Team = '", testing$Away_Team[j], "'"))
+      rankHome <-sqldf(paste0("select teamRanking from teamRankings where Team = '",testing$Home_Team[j],"' and revisedDate = (select max(revisedDate) from teamRankings where revisedDate <= '", testing$revisedDate[j],"' and Team = '", testing$Home_Team[j],"')"))
+      rankHome <- rankHome$teamRanking[1]
+      rankAway <- sqldf(paste0("select teamRanking from teamRankings where Team = '",testing$Away_Team[j],"' and revisedDate = (select max(revisedDate) from teamRankings where revisedDate <= '", testing$revisedDate[j],"' and Team = '", testing$Away_Team[j],"')"))
+
+      rankAway <- rankAway$teamRanking[1]
       
-      if(rankHome$teamRanking > rankAway$teamRanking)
+      if(rankHome > rankAway)
       {
-        testing$bestRankAmongTeams[j] <- rankAway$teamRanking
+       # testing$bestRankAmongTeams[j] <- rankAway$teamRanking
+        bestRankAmongTeams[j] <- rankAway
       } else
       {
-        testing$bestRankAmongTeams[j] <- rankHome$teamRanking
+        #testing$bestRankAmongTeams[j] <- rankHome$teamRanking
+        bestRankAmongTeams[j] <- rankHome
       }
     }
     j <- j+1
   }
+  testing$bestRankAmongTeams <- bestRankAmongTeams
 }
 
 loadBestRankingTeam()
+
+
