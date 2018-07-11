@@ -474,11 +474,11 @@ z.test(mean(octoberGames$Tot_Viewers), meanNumberTotalViewers, sd(octoberGames$T
 
 #Testing averages depending on best ranked team in the matchup
 
-rankViewAverages <- sqldf('select bestRankAmongTeams, avg(Tot_Viewers) as Avg_Viewers from totalViewersPerGame group by bestRankAmongTeams')
-plot(rankViewAverages$Avg_Viewers~rankViewAverages$bestRankAmongTeams)
-myTable <- sqldf('select Tot_Viewers from totalViewersPerGame where bestRankAmongTeams = 1')
+#rankViewAverages <- sqldf('select bestRankAmongTeams, avg(Tot_Viewers) as Avg_Viewers from totalViewersPerGame group by bestRankAmongTeams')
+#plot(rankViewAverages$Avg_Viewers~rankViewAverages$bestRankAmongTeams)
+#myTable <- sqldf('select Tot_Viewers from totalViewersPerGame where bestRankAmongTeams = 1')
 
-z.test(mean(myTable$Tot_Viewers), meanNumberTotalViewers, sd(myTable$Tot_Viewers), length(myTable$Tot_Viewers), 0.95, "greater")
+#z.test(mean(myTable$Tot_Viewers), meanNumberTotalViewers, sd(myTable$Tot_Viewers), length(myTable$Tot_Viewers), 0.95, "greater")
 
 #ranks
 
@@ -498,4 +498,5 @@ totalViewersPerGame$bestRankAmongTeams <- NULL;
 #function to get best ranking team
 
 loadBestRankingTeam()
+
 

@@ -12,13 +12,74 @@ source("functions.R")
 
 #setwd("ProjectRepos/NBAH18/Business\ Analytics")
 
+############################################################ HELPER FUNCTIONS ##########################################################################
+
+getHelperQuery <- function(home, away)
+{
+  
+  return(sqldf(paste0("select Tot_Viewers from totalViewersPerGame where Home_Team ='", home, "'and Away_Team = '", away, "'"))$Tot_Viewers)
+}
+
 ########################################################## IMPORTING DATA ####################################################################################################
 #importing new training data that was made in BusinessAnalytics.R
 newTraining <- read.csv("newTraining.csv", header = T)
 testData <- read.csv("testingWithAttributes.csv", header = T)
 
+rankings2015_2016 <- read.csv("rankings2015_2016.csv", header = T)
+rankings2016_2017 <- read.csv("rankings2016_2017.csv", header = T)
 
-############################################################ BUILDING 3 MODELS #################################################
+
+#loads the best ranking team
+loadBestRankingTeam <- function()
+{
+  j <- 1;
+  while(j <= length(testData$Game_ID))
+  {
+    #if it's the month of October, use the highest ranking team from the previous season
+    if(testData$Month[j] == 10 && getYearFromDate(testData$Game_Date[j]) == 16)
+    {
+      for(i in 1:length(rankings2015_2016$Rk))
+      {
+        if((testData$Home_Team[j] == rankings2015_2016[i,3] || testData$Away_Team[j] == rankings2015_2016[i,3]))
+        {
+          testData$bestRankAmongTeams[j] <- i;
+          break;
+        }
+      }
+    } else if(testData$Month[j] == 10 && getYearFromDate(testData$Game_Date[j]) == 17)
+    {
+      for(i in 1:length(rankings2016_2017$Rk))
+      {
+        if((testData$Home_Team[j] == rankings2016_2017[i,3] || testData$Away_Team[j] == rankings2016_2017[i,3]))
+        {
+          testData$bestRankAmongTeams[j] <- i;
+          break;
+        }
+      }
+    } else  
+    {
+      homeTeam <- testData$Home_Team[j]
+      awayTeam <- testData$Away_Team[j]
+      
+      rankHome <- sqldf(paste0("select teamRanking from teamRankings where Game_Date = '", testData$Game_Date[j], "' and Team = '", testData$Home_Team[j], "'"))
+      rankAway <- sqldf(paste0("select teamRanking from teamRankings where Game_Date = '", testData$Game_Date[j], "' and Team = '", testData$Away_Team[j], "'"))
+      
+      if(rankHome$teamRanking > rankAway$teamRanking)
+      {
+        testData$bestRankAmongTeams[j] <- rankAway$teamRanking
+      } else
+      {
+        testData$bestRankAmongTeams[j] <- rankHome$teamRanking
+      }
+    }
+    j <- j+1
+  }
+}
+
+loadBestRankingTeam()
+
+
+############################################################ BUILDING MODEL #################################################
 
 #First partitioning the data
 
@@ -26,20 +87,22 @@ sample <- sample.int(n=nrow(newTraining), size = floor(.70 * nrow(newTraining)),
 partitionedTraining <- newTraining[sample, ]
 partitionedTesting <- newTraining[-sample, ]
 
-partitionedTraining$Day <- as.factor(partitionedTraining$Day)
+newTraining <- newTraining[-c(1014), ] #Removing one overly influential point (high cook's distance)
 
-month <- partitionedTraining$Month
-day   <- partitionedTraining$Day
-gameType <- partitionedTraining$gameType
-All_Star_Count <- partitionedTraining$All_Star_Count
-isLebron <- partitionedTraining$Is_Lebron_Playing
-hasTopFive <- partitionedTraining$Has_Top_Five_Player
-timeZone <- partitionedTraining$Time_Zone_Of_Game
-medianViewsPerMatchUp <- partitionedTraining$Median_Views_Per_Matchup
-isWeekend <- partitionedTraining$Is_Sat_or_Sun
-bestRankAmongTeams <- partitionedTraining$bestRankAmongTeams
+newTraining$Day <- as.factor(newTraining$Day)
 
-totViewers <- partitionedTraining$Tot_Viewers
+month <- newTraining$Month
+day   <- newTraining$Day
+gameType <- newTraining$gameType
+All_Star_Count <- newTraining$All_Star_Count
+isLebron <- newTraining$Is_Lebron_Playing
+hasTopFive <- newTraining$Has_Top_Five_Player
+timeZone <- newTraining$Time_Zone_Of_Game
+medianViewsPerMatchUp <- newTraining$Median_Views_Per_Matchup
+isWeekend <- newTraining$Is_Sat_or_Sun
+bestRankAmongTeams <- newTraining$bestRankAmongTeams
+
+totViewers <- newTraining$Tot_Viewers
 
 #running 4 variable lm 
 model1 <- lm(totViewers ~ month + medianViewsPerMatchUp + bestRankAmongTeams + gameType)
@@ -52,20 +115,6 @@ plot(model1)
 
 
 
-#running two attribute model
-model2 <- lm(totViewers ~ month + medianViewsPerMatchUp)
-
-summary(model2)
-aov(model2)
-plot(model2)
-
-#running 3 attribute model
-model3 <- lm(totViewers ~ month + medianViewsPerMatchUp + gameType)
-summary(model3)
-aov(model3)
-plot(model3)
-
-
 #Generate model 1 fitted values
 for(i in 1:length(partitionedTesting$Game_ID))
 {
@@ -76,26 +125,14 @@ for(i in 1:length(partitionedTesting$Game_ID))
 
 mean(partitionedTesting$modelOneDeviation)
 
-#Generate model 2 fitted values
-for(i in 1:length(partitionedTesting$Game_ID))
+
+#Answer the testing data 
+for(i in 1:length(testData$Game_ID))
 {
-  newpt <- data.frame(month = partitionedTesting$Month[i], medianViewsPerMatchUp = partitionedTesting$Median_Views_Per_Matchup[i])
-  partitionedTesting$modelTwoPredictions[i] <- predict(model2, newdata = newpt)
-  partitionedTesting$modelTwoDeviation[i] <- abs((partitionedTesting$Tot_Viewers[i] - partitionedTesting$modelTwoPredictions[i])/partitionedTesting$Tot_Viewers[i])
+  newpt <- data.frame(month = testData$Month[i], medianViewsPerMatchUp = testData$Median_Views_Per_Matchup[i], bestRankAmongTeams = testData$bestRankAmongTeams[i], gameType = testData$gameType[i])
+  testData$Total_Viewers[i] <- predict(model1, newdata = newpt)
 }
-
-mean(partitionedTesting$modelTwoDeviation) #MAPE
-
-#Generate model 3 fitted values
-for(i in 1:length(partitionedTesting$Game_ID))
-{
-  newpt <- data.frame(month = partitionedTesting$Month[i], medianViewsPerMatchUp = partitionedTesting$Median_Views_Per_Matchup[i], gameType = partitionedTesting$gameType[i])
-  partitionedTesting$modelThreePredictions[i] <- predict(model3, newdata = newpt)
-  partitionedTesting$modelThreeDeviation[i] <- abs((partitionedTesting$Tot_Viewers[i] - partitionedTesting$modelThreePredictions[i])/partitionedTesting$Tot_Viewers[i])
-}
-
-mean(partitionedTesting$modelThreeDeviation) #MAPE
-
+  
 
 
 
