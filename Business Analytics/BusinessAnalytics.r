@@ -508,12 +508,8 @@ totalViewersPerGame$bestRankAmongTeams <- NULL;
 
 loadBestRankingTeam()
 
-<<<<<<< HEAD
-=======
 #saving the training data to a cvs
 
 write.csv(totalViewersPerGame, file = "newTraining.csv")
 
-
->>>>>>> 15887c28e8ec69b8397a41b8a8f051974867823d
 
