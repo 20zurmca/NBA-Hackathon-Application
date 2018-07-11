@@ -1,0 +1,15 @@
+{
+  "name": "tino",
+  "version": "1.0.0",
+  "description": "",
+  "main": "calculation.js",
+  "dependencies": {
+    "fs": "^0.0.1-security"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
