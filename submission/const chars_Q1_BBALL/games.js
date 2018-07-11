@@ -4,7 +4,7 @@ let lineups = fs.readFileSync("lineups.in", "utf8");
 let lineup_entries = lineups.split(/[(|)]/g);
 
 let games = [] // array for unique game-period objects
-let game_ids = []
+let game_ids = [] // array of all game_ids
 
 lineup_entries.forEach(element => {
     

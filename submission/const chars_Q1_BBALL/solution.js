@@ -14,7 +14,6 @@ game_ids.forEach(game_id =>
 {
     // make game lineup to track game data
     // players: [ {id: ..., plus_minus: ...}, {}, ... ]
-
     let players = [];
 
     // get period lineups and game plays
@@ -100,7 +99,7 @@ game_ids.forEach(game_id =>
 
 });
 
-
+// allocates score to plus and minus teams on players array
 function scores(plus, minus, score, players)
 {
     plus.forEach(element =>
