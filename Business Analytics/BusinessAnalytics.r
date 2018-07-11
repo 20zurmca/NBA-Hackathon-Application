@@ -6,7 +6,7 @@ library(stringi)
 library(data.table)
 
 getwd()
-setwd("ProjectRepos/NBAH18/Business\ Analytics")
+#setwd("ProjectRepos/NBAH18/Business\ Analytics")
 #setwd("/home/cameron/NBAH18/Business\ Analytics")
 source("functions.R")
 
@@ -219,7 +219,6 @@ hasLebron <- function()
   return (Has_Lebron)
 }
 
-totalViewersPerGame$Has_Lebron <- hasLebron()
 totalViewersPerGame["Is_Lebron_Playing"] <- hasLebron()
 
 totalViewersPerGame$Is_Lebron_Playing<- as.factor(totalViewersPerGame$Is_Lebron_Playing)
@@ -334,7 +333,7 @@ totalViewersPerGame$Is_Sat_or_Sun <- as.factor(totalViewersPerGame$Is_Sat_or_Sun
 loadBestRankingTeam <- function()
 {
   j <- 1;
-  while(j < length(totalViewersPerGame$Tot_Viewers))
+  while(j <= length(totalViewersPerGame$Tot_Viewers))
   {
     #if it's the month of October, use the highest ranking team from the previous season
     if(totalViewersPerGame$Month[j] == 10 && getYearFromDate(totalViewersPerGame$Game_Date[j]) == 16)
