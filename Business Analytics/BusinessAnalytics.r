@@ -332,53 +332,49 @@ totalViewersPerGame$Is_Sat_or_Sun <- as.factor(totalViewersPerGame$Is_Sat_or_Sun
 #loads the best ranking team
 loadBestRankingTeam <- function()
 {
-  testData$revisedDate <- mdy(testData$Game_Date)
-  teamRankings$revisedDate <- mdy(teamRankings$Game_Date)
-  
-  
+  totalViewersPerGame$revisedDate <- as.character(as.Date(as.character(totalViewersPerGame$Game_Date), format = "%m/%d/%Y"))
+  teamRankings$revisedDate <- as.character(as.Date(as.character(teamRankings$Game_Date), format = "%m/%d/%Y"))
+  totalViewersPerGame$bestRankAmongTeams <- NULL
   j <- 1;
-  while(j <= nrow(testData))
+  while(j <= nrow(totalViewersPerGame))
   {
     #if it's the month of October, use the highest ranking team from the previous season
-    if(testData$Month[j] == 10 && getYearFromDate(testData$Game_Date[j]) == 16)
+    if(totalViewersPerGame$Month[j] == 10 && getYearFromDate(totalViewersPerGame$Game_Date[j]) == 16)
     {
       for(i in 1:length(rankings2015_2016$Rk))
       {
-        if((testData$Home_Team[j] == rankings2015_2016[i,3] || testData$Away_Team[j] == rankings2015_2016[i,3]))
+        if((totalViewersPerGame$Home_Team[j] == rankings2015_2016[i,3] || totalViewersPerGame$Away_Team[j] == rankings2015_2016[i,3]))
         {
-          testData$bestRankAmongTeams[j] <- i;
+          totalViewersPerGame$bestRankAmongTeams[j] <- i;
           break;
         }
       }
-    } else if(testData$Month[j] == 10 && getYearFromDate(testData$Game_Date[j]) == 17)
+    } else if(totalViewersPerGame$Month[j] == 10 && getYearFromDate(totalViewersPerGame$Game_Date[j]) == 17)
     {
       for(i in 1:length(rankings2016_2017$Rk))
       {
-        if((testData$Home_Team[j] == rankings2016_2017[i,3] || testData$Away_Team[j] == rankings2016_2017[i,3]))
+        if((totalViewersPerGame$Home_Team[j] == rankings2016_2017[i,3] || totalViewersPerGame$Away_Team[j] == rankings2016_2017[i,3]))
         {
-          testData$bestRankAmongTeams[j] <- i;
+          totalViewersPerGame$bestRankAmongTeams[j] <- i;
           break;
         }
       }
     } else  
     {
-      homeTeam <- testData$Home_Team[j]
-      awayTeam <- testData$Away_Team[j]
+      homeTeam <- totalViewersPerGame$Home_Team[j]
+      awayTeam <- totalViewersPerGame$Away_Team[j]
       
-      #rankHome <- sqldf(paste0("select teamRanking from teamRankings where Game_Date = '", testData$Game_Date[j], "' and Team = '", testData$Home_Team[j], "'"))
-      #rankAway <- sqldf(paste0("select teamRanking from teamRankings where Game_Date = '", totalViewersPerGame$Game_Date[j], "' and Team = '", totalViewersPerGame$Away_Team[j], "'"))
+      rankHome <- sqldf(paste0("select teamRanking from teamRankings where Team = '",totalViewersPerGame$Home_Team[j],"' and revisedDate = (select max(revisedDate) from teamRankings where revisedDate <= '", totalViewersPerGame$revisedDate[j],"' and Team = '", totalViewersPerGame$Home_Team[j],"')"))
+      rankHome <- rankHome$teamRanking[1]
+      rankAway <- sqldf(paste0("select teamRanking from teamRankings where Team = '",totalViewersPerGame$Away_Team[j],"' and revisedDate = (select max(revisedDate) from teamRankings where revisedDate <= '", totalViewersPerGame$revisedDate[j],"' and Team = '", totalViewersPerGame$Away_Team[j],"')"))
+      rankAway <- rankAway$teamRanking[1]
       
-      
-      rankHome <- sqldf(paste0("select teamRanking from teamRankings where Team = '", homeTeam, "' and revisedDate = (select max(revisedDate) from testData where revisedDate <= '", testData$revisedDate[j], "' and Team = '", testData$Home_Team[j], "'"))
-      rankAway <- sqldf(paste0("select teamRanking from teamRankings where Team = '", awayTeam, "' and revisedDate = (select max(revisedDate) from testData where revisedDate <= '", testData$revisedDate[j], "' and Team = '", testData$Away_Team[j], "'"))
-      
-      
-      if(rankHome$teamRanking > rankAway$teamRanking)
+      if(rankHome > rankAway)
       {
-        totalViewersPerGame$bestRankAmongTeams[j] <- rankAway$teamRanking
+        totalViewersPerGame$bestRankAmongTeams[j] <- rankAway
       } else
       {
-        totalViewersPerGame$bestRankAmongTeams[j] <- rankHome$teamRanking
+        totalViewersPerGame$bestRankAmongTeams[j] <- rankHome
       }
     }
     j <- j+1
@@ -511,5 +507,5 @@ loadBestRankingTeam()
 #saving the training data to a cvs
 
 write.csv(totalViewersPerGame, file = "newTraining.csv")
-
+write.csv(testData, "testingWithAttributes.csv")
 
