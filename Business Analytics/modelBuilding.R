@@ -29,55 +29,6 @@ rankings2015_2016 <- read.csv("rankings2015_2016.csv", header = T)
 rankings2016_2017 <- read.csv("rankings2016_2017.csv", header = T)
 
 
-#loads the best ranking team
-loadBestRankingTeam <- function()
-{
-  j <- 1;
-  while(j <= length(testData$Game_ID))
-  {
-    #if it's the month of October, use the highest ranking team from the previous season
-    if(testData$Month[j] == 10 && getYearFromDate(testData$Game_Date[j]) == 16)
-    {
-      for(i in 1:length(rankings2015_2016$Rk))
-      {
-        if((testData$Home_Team[j] == rankings2015_2016[i,3] || testData$Away_Team[j] == rankings2015_2016[i,3]))
-        {
-          testData$bestRankAmongTeams[j] <- i;
-          break;
-        }
-      }
-    } else if(testData$Month[j] == 10 && getYearFromDate(testData$Game_Date[j]) == 17)
-    {
-      for(i in 1:length(rankings2016_2017$Rk))
-      {
-        if((testData$Home_Team[j] == rankings2016_2017[i,3] || testData$Away_Team[j] == rankings2016_2017[i,3]))
-        {
-          testData$bestRankAmongTeams[j] <- i;
-          break;
-        }
-      }
-    } else  
-    {
-      homeTeam <- testData$Home_Team[j]
-      awayTeam <- testData$Away_Team[j]
-      
-      rankHome <- sqldf(paste0("select teamRanking from teamRankings where Game_Date = '", testData$Game_Date[j], "' and Team = '", testData$Home_Team[j], "'"))
-      rankAway <- sqldf(paste0("select teamRanking from teamRankings where Game_Date = '", testData$Game_Date[j], "' and Team = '", testData$Away_Team[j], "'"))
-      
-      if(rankHome$teamRanking > rankAway$teamRanking)
-      {
-        testData$bestRankAmongTeams[j] <- rankAway$teamRanking
-      } else
-      {
-        testData$bestRankAmongTeams[j] <- rankHome$teamRanking
-      }
-    }
-    j <- j+1
-  }
-}
-
-loadBestRankingTeam()
-
 
 ############################################################ BUILDING MODEL #################################################
 
