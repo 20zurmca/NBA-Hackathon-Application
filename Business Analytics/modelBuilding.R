@@ -15,9 +15,10 @@ source("functions.R")
 ########################################################## IMPORTING DATA ####################################################################################################
 #importing new training data that was made in BusinessAnalytics.R
 newTraining <- read.csv("newTraining.csv", header = T)
+testData <- read.csv("testingWithAttributes.csv", header = T)
 
 
-############################################################ BUILDING THE MODEL #################################################
+############################################################ BUILDING 3 MODELS #################################################
 
 #First partitioning the data
 
@@ -49,6 +50,8 @@ aov(formula = model1)
 plot(model1)
 
 
+
+
 #running two attribute model
 model2 <- lm(totViewers ~ month + medianViewsPerMatchUp)
 
@@ -62,7 +65,38 @@ summary(model3)
 aov(model3)
 plot(model3)
 
-newpt <- data.frame(month = partitionedTraining$Month[2], medianViewsPerMatchUp = partitionedTraining$Median_Views_Per_Matchup[2], bestRankAmongTeams = partitionedTraining$bestRankAmongTeams[2], gameType = partitionedTraining$gameType[2], se.fit = T)
-predict(model1, newdata = newpt)
+
+#Generate model 1 fitted values
+for(i in 1:length(partitionedTesting$Game_ID))
+{
+  newpt <- data.frame(month = partitionedTesting$Month[i], medianViewsPerMatchUp = partitionedTesting$Median_Views_Per_Matchup[i], bestRankAmongTeams = partitionedTesting$bestRankAmongTeams[i], gameType = partitionedTesting$gameType[i])
+  partitionedTesting$modelOnePredictions[i] <- predict(model1, newdata = newpt)
+  partitionedTesting$modelOneDeviation[i] <- abs((partitionedTesting$Tot_Viewers[i] - partitionedTesting$modelOnePredictions[i])/partitionedTesting$Tot_Viewers[i])
+}
+
+mean(partitionedTesting$modelOneDeviation)
+
+#Generate model 2 fitted values
+for(i in 1:length(partitionedTesting$Game_ID))
+{
+  newpt <- data.frame(month = partitionedTesting$Month[i], medianViewsPerMatchUp = partitionedTesting$Median_Views_Per_Matchup[i])
+  partitionedTesting$modelTwoPredictions[i] <- predict(model2, newdata = newpt)
+  partitionedTesting$modelTwoDeviation[i] <- abs((partitionedTesting$Tot_Viewers[i] - partitionedTesting$modelTwoPredictions[i])/partitionedTesting$Tot_Viewers[i])
+}
+
+mean(partitionedTesting$modelTwoDeviation) #MAPE
+
+#Generate model 3 fitted values
+for(i in 1:length(partitionedTesting$Game_ID))
+{
+  newpt <- data.frame(month = partitionedTesting$Month[i], medianViewsPerMatchUp = partitionedTesting$Median_Views_Per_Matchup[i], gameType = partitionedTesting$gameType[i])
+  partitionedTesting$modelThreePredictions[i] <- predict(model3, newdata = newpt)
+  partitionedTesting$modelThreeDeviation[i] <- abs((partitionedTesting$Tot_Viewers[i] - partitionedTesting$modelThreePredictions[i])/partitionedTesting$Tot_Viewers[i])
+}
+
+mean(partitionedTesting$modelThreeDeviation) #MAPE
+
+
+
 
   
