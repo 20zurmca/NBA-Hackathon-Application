@@ -25,10 +25,6 @@ getHelperQuery <- function(home, away)
 newTraining <- read.csv("newTraining.csv", header = T)
 testData <- read.csv("testingWithAttributes.csv", header = T)
 
-rankings2015_2016 <- read.csv("rankings2015_2016.csv", header = T)
-rankings2016_2017 <- read.csv("rankings2016_2017.csv", header = T)
-
-
 
 ############################################################ BUILDING MODEL #################################################
 
@@ -83,7 +79,7 @@ for(i in 1:length(testData$Game_ID))
   newpt <- data.frame(month = testData$Month[i], medianViewsPerMatchUp = testData$Median_Views_Per_Matchup[i], bestRankAmongTeams = testData$bestRankAmongTeams[i], gameType = testData$gameType[i])
   testData$Total_Viewers[i] <- predict(model1, newdata = newpt)
 }
-  
+
 
 #--------------------------------------------------------------------------------------------------------------------------#
 
