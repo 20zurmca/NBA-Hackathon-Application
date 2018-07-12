@@ -48,11 +48,18 @@ timeZone <- newTraining$Time_Zone_Of_Game
 medianViewsPerMatchUp <- newTraining$Median_Views_Per_Matchup
 isWeekend <- newTraining$Is_Sat_or_Sun
 bestRankAmongTeams <- newTraining$bestRankAmongTeams
+averageViewsPerMatchUpMonth <- newTraining$Predicted_Average_Views_Per_Matchup_By_Month
+averageViewsPerMatchUpAll <- newTraining$Predicted_Average_Views_Per_Matchup_All
+medianViewsPerMatchupMonth <- newTraining$Predicted_Median_Views_Per_Matchup_By_Month
+medianViewsPerMatchupAll <- newTraining$Predicted_Median_Views_Per_Matchup_All
 
 totViewers <- newTraining$Tot_Viewers
 
 #running 4 variable lm 
-model1 <- lm(totViewers ~ month + medianViewsPerMatchUp + bestRankAmongTeams + gameType)
+#model1 <- lm(totViewers ~ month + medianViewsPerMatchUp + bestRankAmongTeams + gameType)
+
+model1 <- lm(totViewers ~ month + medianViewsPerMatchupAll + gameType)
+
 
 summary(model1)
 
@@ -65,7 +72,17 @@ plot(model1)
 #Generate model 1 fitted values
 for(i in 1:length(partitionedTesting$Game_ID))
 {
-  newpt <- data.frame(month = partitionedTesting$Month[i], medianViewsPerMatchUp = partitionedTesting$Median_Views_Per_Matchup[i], bestRankAmongTeams = partitionedTesting$bestRankAmongTeams[i], gameType = partitionedTesting$gameType[i])
+  newpt <- data.frame(month = partitionedTesting$Month[i], medianViewsPerMatchUpAll = partitionedTesting$Median_Views_Per_Matchup_All[i], averageViewsPerMatchUpMonth = partitionedTesting$Predicted_Average_Views_Per_Matchup_By_Month[i], averageViewsPerMatchUpAll = partitionedTesting$Predicted_Average_Views_Per_Matchup_All, gameType = partitionedTesting$gameType[i])
+  partitionedTesting$modelOnePredictions[i] <- predict(model1, newdata = newpt)
+  partitionedTesting$modelOneDeviation[i] <- abs((partitionedTesting$Tot_Viewers[i] - partitionedTesting$modelOnePredictions[i])/partitionedTesting$Tot_Viewers[i])
+}
+
+mean(partitionedTesting$modelOneDeviation)
+
+#Generate model 1 fitted values
+for(i in 1:length(partitionedTesting$Game_ID))
+{
+  newpt <- data.frame(month = partitionedTesting$Month[i], medianViewsPerMatchUpAll = partitionedTesting$Median_Views_Per_Matchup_All[i], gameType = partitionedTesting$gameType[i])
   partitionedTesting$modelOnePredictions[i] <- predict(model1, newdata = newpt)
   partitionedTesting$modelOneDeviation[i] <- abs((partitionedTesting$Tot_Viewers[i] - partitionedTesting$modelOnePredictions[i])/partitionedTesting$Tot_Viewers[i])
 }
