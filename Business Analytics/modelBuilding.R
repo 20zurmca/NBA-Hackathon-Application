@@ -80,6 +80,7 @@ for(i in 1:length(testData$Game_ID))
   testData$Total_Viewers[i] <- predict(model1, newdata = newpt)
 }
 
+write.csv(testData, "testDataSolutionModel1.csv")
 
 #--------------------------------------------------------------------------------------------------------------------------#
 

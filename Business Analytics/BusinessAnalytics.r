@@ -7,7 +7,7 @@ library(data.table)
 
 getwd()
 #setwd("ProjectRepos/NBAH18/Business\ Analytics")
-#setwd("/home/cameron/NBAH18/Business\ Analytics")
+setwd("/home/cameron/NBAH18/Business\ Analytics")
 source("functions.R")
 
 #Before pushing, comment out my working directory and uncomment yours
@@ -126,6 +126,17 @@ getHelperQuery <- function(home, away)
   return(sqldf(paste0("select Tot_Viewers from totalViewersPerGame where Home_Team ='", home, "'and Away_Team = '", away, "'"))$Tot_Viewers)
 }
 
+getHelperQueryTwo <- function(team, month)
+{
+  
+  return(sqldf(paste0("select Tot_Viewers from totalViewersPerGame where Home_Team ='", team, "'or Away_Team = '", team, "' and month = '", month , "'"))$Tot_Viewers)
+}
+
+getHelperQueryThree <- function(team)
+{
+  
+  return(sqldf(paste0("select Tot_Viewers from totalViewersPerGame where Home_Team ='", team, "'or Away_Team = '", team, "'"))$Tot_Viewers)
+}
 #-------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -304,6 +315,67 @@ computeMedianMatchup<- function()
 }
 
 totalViewersPerGame["Median_Views_Per_Matchup"] <- computeMedianMatchup()
+
+computeAverageViewershipPrediction <- function()
+{
+  averageViewsForMatchup <- NULL
+  
+  myAverageDict <- list()
+  
+  for(i in 1:length(totalViewersPerGame$Game_ID))
+  {
+    homeTeam <- totalViewersPerGame$Home_Team[i]
+    awayTeam <- totalViewersPerGame$Away_Team[i]
+    month    <- totalViewersPerGame$Month[i]
+    
+    if(is.integer(myAverageDict[paste0(homeTeam," ", awayTeam)]))
+    {
+      averageViewsForMatchup[i] <- myAverageDict[paste0(homeTeam," ", awayTeam)]
+      
+    } else {
+      
+      avgView <- mean(mean(getHelperQueryTwo(homeTeam, month)), mean(getHelperQueryTwo(awayTeam, month)))
+      
+      averageViewsForMatchup[i] <- avgView
+      myAverageDict[paste0(homeTeam," ", awayTeam)] <- avgView
+    }
+  }
+  return(averageViewsForMatchup)
+}
+
+totalViewersPerGame["Predicted_Average_Views_Per_Matchup_By_Month"] <- computeAverageViewershipPrediction()
+
+
+computeAverageViewershipPredictionTwo <- function()
+{
+  averageViewsForMatchup <- NULL
+  
+  myAverageDict <- list()
+  
+  for(i in 1:length(totalViewersPerGame$Game_ID))
+  {
+    homeTeam <- totalViewersPerGame$Home_Team[i]
+    awayTeam <- totalViewersPerGame$Away_Team[i]
+    month    <- totalViewersPerGame$Month[i]
+    
+    if(is.integer(myAverageDict[paste0(homeTeam," ", awayTeam)]))
+    {
+      averageViewsForMatchup[i] <- myAverageDict[paste0(homeTeam," ", awayTeam)]
+      
+    } else {
+      
+      avgView <- mean(mean(getHelperQueryThree(homeTeam)), mean(getHelperQueryThree(awayTeam)))
+      
+      averageViewsForMatchup[i] <- avgView
+      myAverageDict[paste0(homeTeam," ", awayTeam)] <- avgView
+    }
+  }
+  return(averageViewsForMatchup)
+}
+
+totalViewersPerGame["Predicted_Average_Views_Per_Matchup_All"] <- computeAverageViewershipPredictionTwo()
+
+totalViewersPerGame <- totalViewersPerGame[, -14]
 
 
 #Appending a Row "Is_Weekend": 'Yes' = saturday or sunday, 'No' = else. Recall sat/sunday were statistically significant for viewership
