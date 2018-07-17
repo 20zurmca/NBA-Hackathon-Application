@@ -24,17 +24,26 @@ getHelperQuery <- function(home, away)
 #importing new training data that was made in BusinessAnalytics.R
 newTraining <- read.csv("newTraining.csv", header = T)
 testData <- read.csv("testingWithAttributes.csv", header = T)
+gameData <- read.csv("game_data.csv", header = T)
+rankings2015_2016 <- read.csv("rankings2015_2016.csv", header = T)
+rankings2016_2017 <- read.csv("rankings2016_2017.csv", header = T)
+
+teamRankings <- data.table(gameData, key = "Game_Date")
+teamRankings <- teamRankings[,transform(.SD, teamRanking = rank(-Wins_Entering_Gm, ties.method = "min")), by = Game_Date]
+teamRankings <- teamRankings[,c("Game_Date", "Team", "Wins_Entering_Gm", "teamRanking")]
+
 
 
 ############################################################ BUILDING MODEL #################################################
 
 #First partitioning the data
 
+newTraining <- newTraining[-c(1014), ] #Removing one overly influential point (high cook's distance >0.5)
+
 sample <- sample.int(n=nrow(newTraining), size = floor(.70 * nrow(newTraining)), replace = FALSE, prob = NULL)
 partitionedTraining <- newTraining[sample, ]
 partitionedTesting <- newTraining[-sample, ]
 
-newTraining <- newTraining[-c(1014), ] #Removing one overly influential point (high cook's distance)
 
 newTraining$Day <- as.factor(newTraining$Day)
 
@@ -45,20 +54,23 @@ All_Star_Count <- newTraining$All_Star_Count
 isLebron <- newTraining$Is_Lebron_Playing
 hasTopFive <- newTraining$Has_Top_Five_Player
 timeZone <- newTraining$Time_Zone_Of_Game
-medianViewsPerMatchUp <- newTraining$Median_Views_Per_Matchup
 isWeekend <- newTraining$Is_Sat_or_Sun
 bestRankAmongTeams <- newTraining$bestRankAmongTeams
-averageViewsPerMatchUpMonth <- newTraining$Predicted_Average_Views_Per_Matchup_By_Month
-averageViewsPerMatchUpAll <- newTraining$Predicted_Average_Views_Per_Matchup_All
-medianViewsPerMatchupMonth <- newTraining$Predicted_Median_Views_Per_Matchup_By_Month
-medianViewsPerMatchupAll <- newTraining$Predicted_Median_Views_Per_Matchup_All
+medianViewsPerMatchUp <- newTraining$Median_Views_Per_Matchup
 
 totViewers <- newTraining$Tot_Viewers
 
-#running 4 variable lm 
-#model1 <- lm(totViewers ~ month + medianViewsPerMatchUp + bestRankAmongTeams + gameType)
 
-model1 <- lm(totViewers ~ month + medianViewsPerMatchupAll + gameType)
+#Assigning less weights to outliers
+newTraining$weights <- NULL
+for(i in 1:length(newTraining$Game_ID))
+{
+  newTraining$weights[i] <- 1/(newTraining$Tot_Viewers[i])^2
+}
+
+
+#running 4 variable lm 
+model1 <- lm(totViewers ~ month + medianViewsPerMatchUp + bestRankAmongTeams + gameType, weights = newTraining$weights)
 
 
 summary(model1)
@@ -67,27 +79,13 @@ aov(formula = model1)
 plot(model1)
 
 
-
-
-#Generate model 1 fitted values
+#Generate model 1 fitted values, ignore the warning because the testing data is not same length as training
 for(i in 1:length(partitionedTesting$Game_ID))
 {
-  newpt <- data.frame(month = partitionedTesting$Month[i], medianViewsPerMatchUpAll = partitionedTesting$Median_Views_Per_Matchup_All[i], averageViewsPerMatchUpMonth = partitionedTesting$Predicted_Average_Views_Per_Matchup_By_Month[i], averageViewsPerMatchUpAll = partitionedTesting$Predicted_Average_Views_Per_Matchup_All, gameType = partitionedTesting$gameType[i])
+  newpt <- data.frame(month = partitionedTesting$Month[i], medianViewsPerMatchUp = partitionedTesting$Median_Views_Per_Matchup[i], bestRankAmongTeams = partitionedTesting$bestRankAmongTeams, gameType = partitionedTesting$gameType[i])
   partitionedTesting$modelOnePredictions[i] <- predict(model1, newdata = newpt)
   partitionedTesting$modelOneDeviation[i] <- abs((partitionedTesting$Tot_Viewers[i] - partitionedTesting$modelOnePredictions[i])/partitionedTesting$Tot_Viewers[i])
 }
-
-mean(partitionedTesting$modelOneDeviation)
-
-#Generate model 1 fitted values
-for(i in 1:length(partitionedTesting$Game_ID))
-{
-  newpt <- data.frame(month = partitionedTesting$Month[i], medianViewsPerMatchUpAll = partitionedTesting$Median_Views_Per_Matchup_All[i], gameType = partitionedTesting$gameType[i])
-  partitionedTesting$modelOnePredictions[i] <- predict(model1, newdata = newpt)
-  partitionedTesting$modelOneDeviation[i] <- abs((partitionedTesting$Tot_Viewers[i] - partitionedTesting$modelOnePredictions[i])/partitionedTesting$Tot_Viewers[i])
-}
-
-mean(partitionedTesting$modelOneDeviation)
 
 
 #Answer the testing data 
@@ -99,7 +97,9 @@ for(i in 1:length(testData$Game_ID))
 
 write.csv(testData, "testDataSolutionModel1.csv")
 
-#--------------------------------------------------------------------------------------------------------------------------#
+
+
+ #--------------------------------------------------------------------------------------------------------------------------#
 
 #KNN REGRESSION - was not a good model
 

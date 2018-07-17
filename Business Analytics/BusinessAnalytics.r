@@ -375,7 +375,7 @@ computeAverageViewershipPredictionTwo <- function()
 
 totalViewersPerGame["Predicted_Average_Views_Per_Matchup_All"] <- computeAverageViewershipPredictionTwo()
 
-totalViewersPerGame <- totalViewersPerGame[, -14]
+#totalViewersPerGame <- totalViewersPerGame[, -14]
 
 
 #Appending a Row "Is_Weekend": 'Yes' = saturday or sunday, 'No' = else. Recall sat/sunday were statistically significant for viewership
@@ -400,6 +400,10 @@ totalViewersPerGame["Is_Sat_or_Sun"] <- isWeekend()
 
 totalViewersPerGame$Is_Sat_or_Sun <- as.factor(totalViewersPerGame$Is_Sat_or_Sun)
 
+#Ranking teams partitioned by game date
+teamRankings <- data.table(gameData, key = "Game_Date")
+teamRankings <- teamRankings[,transform(.SD, teamRanking = rank(-Wins_Entering_Gm, ties.method = "min")), by = Game_Date]
+teamRankings <- teamRankings[,c("Game_Date", "Team", "Wins_Entering_Gm", "teamRanking")]
 
 #loads the best ranking team
 loadBestRankingTeam <- function()
@@ -561,16 +565,10 @@ z.test(mean(octoberGames$Tot_Viewers), meanNumberTotalViewers, sd(octoberGames$T
 
 #--------------------------------------------------------------------------------------------------------------------------------#
 
-#Ranking teams partitioned by game date
-teamRankings <- data.table(gameData, key = "Game_Date")
-teamRankings <- teamRankings[,transform(.SD, teamRanking = rank(-Wins_Entering_Gm, ties.method = "min")), by = Game_Date]
-teamRankings <- teamRankings[,c("Game_Date", "Team", "Wins_Entering_Gm", "teamRanking")]
+
 
 
 #use rankings2015 from 2015-2016 season for month of October 10/2016 only
-
-
-totalViewersPerGame$bestRankAmongTeams <- NULL;
 
 #function to get best ranking team
 
@@ -579,5 +577,18 @@ loadBestRankingTeam()
 #saving the training data to a cvs
 
 write.csv(totalViewersPerGame, file = "newTraining.csv")
-write.csv(testData, "testingWithAttributes.csv")
+
+
+#Get MAPES for median deviation, average deviation, and month average deviaiton for each mathcup
+
+for(i in 1:length(totalViewersPerGame$Game_ID))
+{
+  totalViewersPerGame$medianDeviation[i] <- abs((totalViewersPerGame$Tot_Viewers[i] - totalViewersPerGame$Median_Views_Per_Matchup[i])/totalViewersPerGame$Tot_Viewers[i])
+  totalViewersPerGame$averageDeviation[i] <- abs((totalViewersPerGame$Tot_Viewers[i] - totalViewersPerGame$Predicted_Average_Views_Per_Matchup_All[i])/totalViewersPerGame$Tot_Viewers[i])
+  totalViewersPerGame$monthAverageDeviation[i] <- abs((totalViewersPerGame$Tot_Viewers[i] - totalViewersPerGame$Predicted_Average_Views_Per_Matchup_By_Month[i])/totalViewersPerGame$Tot_Viewers[i])
+}
+
+mean(totalViewersPerGame$medianDeviation)
+mean(totalViewersPerGame$averageDeviation)
+mean(totalViewersPerGame$monthAverageDeviation)
 
