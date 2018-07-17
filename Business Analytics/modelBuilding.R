@@ -65,7 +65,7 @@ totViewers <- newTraining$Tot_Viewers
 newTraining$weights <- NULL
 for(i in 1:length(newTraining$Game_ID))
 {
-  newTraining$weights[i] <- 1/(newTraining$Tot_Viewers[i])^2
+  newTraining$weights[i] <- 1/(newTraining$Tot_Viewers[i])
 }
 
 
@@ -86,6 +86,8 @@ for(i in 1:length(partitionedTesting$Game_ID))
   partitionedTesting$modelOnePredictions[i] <- predict(model1, newdata = newpt)
   partitionedTesting$modelOneDeviation[i] <- abs((partitionedTesting$Tot_Viewers[i] - partitionedTesting$modelOnePredictions[i])/partitionedTesting$Tot_Viewers[i])
 }
+
+mean(partitionedTesting$modelOneDeviation)
 
 
 #Answer the testing data 
