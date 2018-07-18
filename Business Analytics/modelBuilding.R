@@ -14,6 +14,7 @@ source("functions.R")
 
 ############################################################ HELPER FUNCTIONS ##########################################################################
 
+#A query that selects total viewers from a game where the hometeam = @param home and away team = @param away
 getHelperQuery <- function(home, away)
 {
   
@@ -24,6 +25,7 @@ getHelperQuery <- function(home, away)
 #importing new training data that was made in BusinessAnalytics.R
 newTraining <- read.csv("newTraining.csv", header = T)
 testData <- read.csv("testingWithAttributes.csv", header = T)
+submission <- read.csv("test_set.csv", header =T)
 gameData <- read.csv("game_data.csv", header = T)
 rankings2015_2016 <- read.csv("rankings2015_2016.csv", header = T)
 rankings2016_2017 <- read.csv("rankings2016_2017.csv", header = T)
@@ -36,7 +38,7 @@ teamRankings <- teamRankings[,c("Game_Date", "Team", "Wins_Entering_Gm", "teamRa
 
 ############################################################ BUILDING MODEL #################################################
 
-#First partitioning the data
+#First partitioning the data into testing and training from newTraining data frame
 
 newTraining <- newTraining[-c(1014), ] #Removing one overly influential point (high cook's distance >0.5)
 
@@ -61,7 +63,7 @@ medianViewsPerMatchUp <- newTraining$Median_Views_Per_Matchup
 totViewers <- newTraining$Tot_Viewers
 
 
-#Assigning less weights to outliers
+#Assigning less weights to outliers, using weight = 1/total_viewers[i]
 newTraining$weights <- NULL
 for(i in 1:length(newTraining$Game_ID))
 {
@@ -87,7 +89,7 @@ for(i in 1:length(partitionedTesting$Game_ID))
   partitionedTesting$modelOneDeviation[i] <- abs((partitionedTesting$Tot_Viewers[i] - partitionedTesting$modelOnePredictions[i])/partitionedTesting$Tot_Viewers[i])
 }
 
-mean(partitionedTesting$modelOneDeviation)
+mean(partitionedTesting$modelOneDeviation) #exploring MAPE. MAPE was .22
 
 
 #Answer the testing data 
@@ -101,7 +103,7 @@ write.csv(testData, "testDataSolutionModel1.csv")
 
 
 
- #--------------------------------------------------------------------------------------------------------------------------#
+ #-----------------------------------------------------------KNN MODEL-------------------------------------------------------------#
 
 #KNN REGRESSION - was not a good model
 

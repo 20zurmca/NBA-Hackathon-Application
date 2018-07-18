@@ -120,18 +120,20 @@ lookUpTopPlayerStatusFor <- function(team, month, year)
   }
 }
 
+#gets total viewers per game where home is home and away is away
 getHelperQuery <- function(home, away)
 {
 
   return(sqldf(paste0("select Tot_Viewers from totalViewersPerGame where Home_Team ='", home, "'and Away_Team = '", away, "'"))$Tot_Viewers)
 }
-
+#gets total viewers for a specific team for a specific mont
 getHelperQueryTwo <- function(team, month)
 {
   
   return(sqldf(paste0("select Tot_Viewers from totalViewersPerGame where Home_Team ='", team, "'or Away_Team = '", team, "' and month = '", month , "'"))$Tot_Viewers)
 }
 
+#gets total viewers for a specific team
 getHelperQueryThree <- function(team)
 {
   
@@ -142,14 +144,14 @@ getHelperQueryThree <- function(team)
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-#################################################################### FUNCTIONS AND APPENDED COLLUMNS #########################################################################
+#################################################################### FUNCTIONS AND APPENDED columnS #########################################################################
 
 #MONTHS AND TYPES OF GAMES
 
 #Convert all dates to months of the year
 totalViewersPerGame$Month <- month(as.POSIXlt(totalViewersPerGame$Game_Date, format = "%m/%d/%Y"))
 
-#Adding in the day of week
+#Adding in the day of week column
 totalViewersPerGame$Day <- weekdays(as.Date(totalViewersPerGame$Game_Date, format="%m/%d/%Y"))
 
 
@@ -157,7 +159,7 @@ totalViewersPerGame$Day <- weekdays(as.Date(totalViewersPerGame$Game_Date, forma
 #Comparative Boxplot for viewership and months
 boxplot(totalViewersPerGame$Tot_Viewers ~ totalViewersPerGame$Month, main = "Comparative Boxplots for Viewers Per Month", xlab = "Month of Year", ylab = "# of Int'l Viewers")
 
-#Adding a collumn for GameType
+#Adding a column for GameType
 # First determine if it's Christmas or opening day.  Set to C for Christmas, O for opening day, and R for any other game.
 totalViewersPerGame$gameType <- NULL
 for(i in 1:length(totalViewersPerGame$Game_Date))
@@ -415,6 +417,7 @@ loadBestRankingTeam <- function()
   while(j <= nrow(totalViewersPerGame))
   {
     #if it's the month of October, use the highest ranking team from the previous season
+    #use rankings2015 from 2015-2016 season for month of October 10/2016 only
     if(totalViewersPerGame$Month[j] == 10 && getYearFromDate(totalViewersPerGame$Game_Date[j]) == 16)
     {
       for(i in 1:length(rankings2015_2016$Rk))
@@ -476,6 +479,8 @@ groupByAllStarCount <- sqldf('select Game_ID, Home_Team, Away_Team, Game_Date, A
 #Calculating average views per all star count in game
 Average_Views_Per_All_Star_Count <- NULL
 Number_of_Games <- NULL
+
+#get the average number of viewers for games with __ amount of all stars
 for(i in 1:length(groupByAllStarCount$All_Star_Count))
 {
   all_star_query <- sqldf(paste0("select * from totalViewersPerGame where All_Star_Count =" ,i))
@@ -484,7 +489,7 @@ for(i in 1:length(groupByAllStarCount$All_Star_Count))
 }
 
 groupByAllStarCount$Average_Views_Per_All_Star_Count <- Average_Views_Per_All_Star_Count
-groupByAllStarCount$Number_of_Games <- Number_of_Games #there seems to be an upward trend
+groupByAllStarCount$Number_of_Games <- Number_of_Games #there seems to be an upward trend that the more all stars there are in game, the more viewers
 
 gamesWithLebron <- sqldf('select Game_ID, Home_Team, Away_Team, Game_Date, Is_Lebron_Playing, Tot_Viewers from totalViewersPerGame where Is_Lebron_Playing = "YES"')
 gamesWithoutLebron <- sqldf('select Game_ID, Home_Team, Away_Team, Game_Date, Is_Lebron_Playing, Tot_Viewers from totalViewersPerGame where Is_Lebron_Playing = "NO"')
@@ -567,10 +572,7 @@ z.test(mean(octoberGames$Tot_Viewers), meanNumberTotalViewers, sd(octoberGames$T
 
 
 
-
-#use rankings2015 from 2015-2016 season for month of October 10/2016 only
-
-#function to get best ranking team
+#function to get best ranking team in a game
 
 loadBestRankingTeam()
 
@@ -579,7 +581,7 @@ loadBestRankingTeam()
 write.csv(totalViewersPerGame, file = "newTraining.csv")
 
 
-#Get MAPES for median deviation, average deviation, and month average deviaiton for each mathcup
+#Get MAPES for median deviation, average deviation, and month average deviaiton for each mathcup to see which is best indicator
 
 for(i in 1:length(totalViewersPerGame$Game_ID))
 {
@@ -591,4 +593,6 @@ for(i in 1:length(totalViewersPerGame$Game_ID))
 mean(totalViewersPerGame$medianDeviation)
 mean(totalViewersPerGame$averageDeviation)
 mean(totalViewersPerGame$monthAverageDeviation)
+#Median viewers per matchup was the best
+
 
